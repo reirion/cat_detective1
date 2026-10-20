@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>고양이 탐정 : 수상한 오후</title>
+<style>
+:root{
+  --ink:#302b3a; --muted:#777183; --paper:#fffaf0; --paper2:#f4ead8;
+  --plum:#65516e; --plum-dark:#473850; --gold:#d5a94f; --mint:#a8c7b1;
+  --rose:#d98283; --line:#d9cdb9; --shadow:0 12px 32px #33264120;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;font-family:"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;color:var(--ink);background:#e8dfd3}
+button,input,textarea{font:inherit}
+button{cursor:pointer;border:0}
+#loading{position:fixed;inset:0;z-index:100;background:#f6eedf;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;transition:opacity .5s}
+.loading-cat{font-size:62px;animation:bob 1s infinite alternate}
+@keyframes bob{to{transform:translateY(-8px)}}
+.load-track{width:min(320px,78vw);height:12px;border-radius:99px;background:#dfd2bd;overflow:hidden;border:1px solid #cbbba4}
+#load-fill{height:100%;width:0;background:linear-gradient(90deg,#9ebba6,#d7b35e);transition:width .15s}
+#load-percent{font-weight:800;color:var(--plum)}
+#app{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.game-shell{position:relative;width:min(100%,1000px);min-height:min(760px,calc(100vh - 40px));background:var(--paper);border:4px solid var(--plum-dark);border-radius:20px;overflow:hidden;box-shadow:var(--shadow);display:flex;flex-direction:column}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 18px;background:var(--plum-dark);color:#fff5e4;font-size:13px}
+.topbar strong{letter-spacing:.03em}
+.screen{display:none;flex:1;padding:clamp(18px,4vw,38px);animation:fade .25s ease}
+.screen.active{display:flex;flex-direction:column}
+@keyframes fade{from{opacity:.4;transform:translateY(4px)}to{opacity:1;transform:none}}
+.eyebrow{text-transform:uppercase;letter-spacing:.15em;font-size:11px;color:var(--plum);font-weight:900}
+h1,h2,h3,p{margin-top:0}
+h1{font-size:clamp(34px,6vw,58px);line-height:1.15;margin-bottom:12px;color:var(--plum-dark)}
+h2{font-size:clamp(23px,3vw,32px);margin-bottom:10px;color:var(--plum-dark)}
+h3{font-size:18px;margin-bottom:8px}
+p{line-height:1.75}
+.subtitle{color:var(--muted);max-width:540px;margin-bottom:26px}
+.hero{align-items:center;justify-content:center;text-align:center;min-height:560px;background:
+ radial-gradient(circle at 50% 28%,#f0dfb6 0 10%,transparent 10.5%),
+ linear-gradient(180deg,#fff9ed,#f0e4d2)}
+.hero-cat{font-size:100px;filter:drop-shadow(0 8px 0 #d8c6ad);margin-bottom:10px}
+.menu-buttons{display:grid;gap:11px;width:min(330px,100%);margin-top:16px}
+.btn{padding:13px 18px;border-radius:12px;font-weight:800;transition:transform .12s,filter .12s}
+.btn:hover{filter:brightness(1.04);transform:translateY(-1px)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btn-primary{background:var(--plum);color:white;box-shadow:0 4px 0 var(--plum-dark)}
+.btn-secondary{background:#e8ddca;color:var(--plum-dark);border:1px solid #d1c1aa}
+.btn-gold{background:var(--gold);color:#342a1b;box-shadow:0 4px 0 #ad8436}
+.btn-quiet{background:transparent;color:var(--plum);border:1px solid var(--line)}
+.btn-small{padding:8px 12px;font-size:13px}
+.panel{background:#fffdf8;border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 4px 14px #392c1710}
+.panel + .panel{margin-top:12px}
+.row{display:flex;gap:14px;align-items:center}
+.between{justify-content:space-between}
+.wrap{flex-wrap:wrap}
+.stack{display:flex;flex-direction:column;gap:12px}
+.grow{flex:1;min-width:0}
+input,textarea,select{width:100%;padding:12px;border-radius:10px;border:1px solid #cfc2af;background:#fffefa;color:var(--ink);outline-color:var(--plum)}
+textarea{resize:vertical;min-height:110px;line-height:1.6}
+.field-label{display:block;font-weight:800;font-size:13px;margin-bottom:7px}
+.hint{font-size:12px;color:var(--muted);line-height:1.6}
+.error{color:#a33f45;font-size:13px;font-weight:700;min-height:20px}
+.episode-card{display:grid;grid-template-columns:105px 1fr;gap:16px;align-items:center}
+.episode-art{border-radius:14px;min-height:115px;display:flex;align-items:center;justify-content:center;font-size:48px;background:linear-gradient(135deg,#d8e2d0,#f4dfb6);border:1px solid #c8d2bf}
+.tag{display:inline-flex;align-items:center;gap:5px;background:#eee6f1;color:#5b4567;border-radius:999px;padding:5px 9px;font-size:11px;font-weight:800}
+.letter{background:#fff8e8;border:1px solid #d9c49a;padding:clamp(20px,4vw,34px);border-radius:5px;box-shadow:inset 0 0 0 5px #fffaf0,0 6px 18px #5a452010;max-width:690px;margin:12px auto;width:100%;position:relative}
+.letter:before{content:"";position:absolute;inset:10px;border:1px solid #e8d8b6;pointer-events:none}
+.letter>*{position:relative}
+.letter p{white-space:pre-line}
+.letter .letter-title{text-align:center;font-family:Georgia,serif;color:#78613b;letter-spacing:.08em;font-size:20px;margin-bottom:24px}
+.letter-actions{display:flex;justify-content:center;margin-top:20px}
+.statusbar{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.stat{background:#f0e7d9;border:1px solid #dfd0b9;border-radius:10px;padding:8px 12px;font-size:13px;font-weight:800}
+.stat b{color:var(--plum)}
+.scene-layout{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(220px,.8fr);gap:16px;align-items:stretch}
+.scene-art{position:relative;overflow:hidden;aspect-ratio:16/9;border-radius:16px;border:2px solid #897b70;background:#211b20 url("images/ep01_bg.png") center/cover no-repeat}
+.hotspot{position:absolute;z-index:6;width:35px;height:35px;border-radius:50%;border:3px solid #fff8dc;background:#d8a843;color:#3b2c1c;font-weight:1000;box-shadow:0 0 0 5px #d8a84355;display:flex;align-items:center;justify-content:center;transition:transform .15s}
+.hotspot:hover{transform:scale(1.15)}
+.hotspot.found{background:#7caa8a;border-color:#edfff0;box-shadow:0 0 0 4px #7caa8a55}
+.hotspot.locked{opacity:.28;filter:grayscale(1)}
+/* 에피소드 1 단서 번호 위치: left=좌우, top=상하 (이미지 기준 %) */
+.hs1{left:8%;top:50%}
+.hs2{left:59%;top:50%}
+.hs3{left:88%;top:26%}
+.hs4{left:41%;top:54%}
+.hs5{left:53%;top:67%}
+.hs6{left:11%;top:36%}
+.hs7{left:34%;top:53%}
+.hs8{left:13%;top:60%}
+.hs9{left:68%;top:29%}
+.scene-note{font-size:12px;color:var(--muted);margin:10px 0 0}
+.clue-list{display:flex;flex-direction:column;gap:8px;max-height:310px;overflow:auto}
+.clue-item{display:flex;align-items:flex-start;gap:9px;padding:10px;background:#f8f0e4;border:1px solid #e5d8c4;border-radius:10px;font-size:13px;line-height:1.5}
+.clue-num{flex:none;width:25px;height:25px;display:grid;place-items:center;background:#e0d2b9;border-radius:7px;font-weight:900}
+.clue-item strong{display:block;margin-bottom:2px}
+.clue-item small{color:var(--muted)}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.evidence-chip{display:flex;gap:8px;align-items:flex-start;padding:12px;border:1px solid var(--line);border-radius:10px;background:#fffdf8}
+.evidence-chip input{width:auto;margin-top:4px}
+.quote{font-family:Georgia,serif;font-size:17px;line-height:1.7;color:#5e4b64}
+.dialogue{display:flex;gap:14px;align-items:flex-start}
+.avatar{flex:none;width:76px;height:76px;border-radius:18px;display:grid;place-items:center;font-size:42px;background:#e5d7c3;border:1px solid #d1bfa7}
+.reward-icon{font-size:66px;text-align:center;filter:drop-shadow(0 5px 0 #d9c6a6)}
+.footer{padding:10px 18px;border-top:1px solid #e5d8c7;color:#8a8090;font-size:11px;text-align:center;background:#fffaf2}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#33283c;color:white;padding:12px 18px;border-radius:12px;box-shadow:var(--shadow);z-index:200;display:none;max-width:90vw}
+.modal-backdrop{position:fixed;inset:0;background:#211b2bb0;display:none;align-items:center;justify-content:center;padding:20px;z-index:150}
+.modal{width:min(700px,100%);max-height:85vh;overflow:auto;background:var(--paper);border-radius:20px;border:2px solid var(--plum);padding:clamp(20px,3vw,30px);box-shadow:var(--shadow)}
+#modal-text{font-size:clamp(15px,1.6vw,20px);line-height:1.65;white-space:pre-line;margin:12px 0 16px}
+.modal-info-section{background:#f4ead9;border:1px solid #e1d1b8;border-left:5px solid var(--gold);border-radius:12px;padding:12px 16px;margin:12px 0}
+.modal-info-section h4{font-size:15px;color:var(--plum-dark);margin:0 0 7px}
+.modal-info-section ol{margin:0;padding-left:22px;line-height:1.6;font-size:14px}
+.modal-note{background:#eee6f1;border:1px solid #d5c5dc;border-left:5px solid var(--plum);border-radius:12px;padding:12px 15px;margin-top:14px;color:#493b50;line-height:1.6;font-size:15px}
+.modal-note strong{display:block;margin-bottom:5px;color:var(--plum-dark)}
+.modal-note p{margin:0}
+.modal h3{font-size:clamp(19px,2.2vw,24px);margin-bottom:12px;color:var(--plum-dark)}
+.modal .btn{font-size:16px;padding:11px 20px}
+@media(max-width:720px){
+ #app{padding:0}.game-shell{min-height:100vh;border-radius:0;border-width:0}
+ .scene-layout{grid-template-columns:1fr}.scene-art{min-height:0}.two-col{grid-template-columns:1fr}
+ .topbar{padding:10px 13px}.episode-card{grid-template-columns:80px 1fr}.episode-art{min-height:95px;font-size:38px}
+ .hero{min-height:calc(100vh - 75px)}.hero-cat{font-size:78px}
+}
+
+/* Episode 2 styles */
+.ep2-screen .ep2-actions{margin-top:18px;gap:10px}.ep2-letter{max-width:900px}.ep2-scene-board{display:grid;grid-template-columns:minmax(0,2fr) minmax(220px,1fr);gap:16px;margin:16px 0}.ep2-scene-illustration{aspect-ratio:16/9;position:relative;overflow:hidden;border:3px solid #b8a286;border-radius:14px;background:#171723 url("images/ep02_bg.png") center/cover no-repeat;box-shadow:inset 0 0 0 8px #1c1a2a;color:#fff}.ep2-window{position:absolute;top:22px;left:12%;width:22%;height:26%;border:5px solid #9b8064;background:#303d55;text-align:center;padding-top:20px;font-size:28px}.ep2-bookshelf{position:absolute;right:7%;top:9%;width:24%;height:55%;border:7px solid #71452f;background:#543426;text-align:center;line-height:2.2;font-size:24px}.ep2-body{position:absolute;left:38%;top:49%;font-size:44px;transform:rotate(-12deg);filter:drop-shadow(0 4px 4px #0008)}.ep2-desk{position:absolute;left:18%;bottom:9%;width:52%;height:19%;border:7px solid #69412c;border-radius:8px;background:#9b6844;text-align:center;padding:12px;font-size:25px}.ep2-door{position:absolute;right:8%;bottom:8%;font-size:46px}.ep2-hotspot{position:absolute;z-index:2;width:38px;height:38px;border-radius:50%;border:2px solid #fff5d6;background:#a94343;color:#fff;font-weight:800;cursor:pointer;box-shadow:0 2px 10px #0005}/* 에피소드 2 단서 번호 위치: left=좌우, top=상하 (이미지 기준 %) */
+.ep2-h1{left:39%;top:25%}
+.ep2-h2{left:70%;top:81%}
+.ep2-h3{left:14%;top:48%}
+.ep2-h4{left:78%;top:35%}
+.ep2-h5{left:91%;top:91%}.ep2-legend{padding:18px;border:1px solid var(--line);border-radius:12px;background:var(--paper2)}.ep2-legend p{margin:10px 0}.ep2-found-strip{display:flex;gap:8px;flex-wrap:wrap}.ep2-found-strip button,.ep2-evidence-card{border:1px solid var(--line);border-radius:10px;padding:12px;background:#fffaf0;color:var(--ink);text-align:left;cursor:pointer}.ep2-suspect-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:16px}.ep2-suspect{display:flex;flex-direction:column;gap:8px}.ep2-suspect .btn{align-self:flex-start}.ep2-avatar{font-size:38px}.ep2-table-stats{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}.ep2-evidence-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.ep2-evidence-card{display:block;width:100%;font:inherit}.ep2-evidence-card strong,.ep2-evidence-card small{display:block}.ep2-evidence-card small{margin-top:5px;opacity:.7}.ep2-form-panel{display:flex;flex-direction:column;gap:10px;max-width:850px}.ep2-form-panel select,.ep2-form-panel textarea{width:100%;padding:11px;border:1px solid var(--line);border-radius:8px;background:#fffdf8;color:var(--ink);font:inherit;margin-bottom:8px}.ep2-result-content{line-height:1.8}.ep2-episode-card{margin-top:14px}.episode-heading{margin-bottom:0}.currency-pill{font-size:12px;padding:6px 10px;white-space:nowrap}
+@media(max-width:700px){.ep2-scene-board{grid-template-columns:1fr}.ep2-suspect-grid,.ep2-evidence-list{grid-template-columns:1fr}.ep2-scene-illustration{min-height:0}}
+
+.ep3-scene-illustration{position:relative;overflow:hidden;aspect-ratio:16/9;border:3px solid #b8a286;border-radius:14px;background:#f0dfc8 url("images/ep03_bg.png") center/cover no-repeat;box-shadow:inset 0 0 0 8px #1c1a2a}
+.ep3-h1{left:74%;top:52%}.ep3-h2{left:68%;top:39%}.ep3-h3{left:43%;top:77%}.ep3-h4{left:35%;top:50%}
+@media(max-width:700px){.ep3-scene-illustration{min-height:0}}
+
+.ep4-scene-illustration{position:relative;overflow:hidden;aspect-ratio:16/9;border:3px solid #b8a286;border-radius:14px;background:#2a211b url("images/ep04_bg.png") center/cover no-repeat;box-shadow:inset 0 0 0 8px #1c1a2a}
+/* 에피소드 4 현장 번호 위치: left=좌우, top=상하 (이미지 기준 %) */
+.ep4-h1{left:39%;top:34%}.ep4-h2{left:64%;top:47%}.ep4-h3{left:67%;top:71%}.ep4-h4{left:88%;top:30%}.ep4-h5{left:19%;top:32%}
+
+</style>
+</head>
+<body>
+<div id="loading">
+  <div class="loading-cat">🐈</div>
+  <h2 style="margin:0">로딩중...</h2>
+  <div class="load-track"><div id="load-fill"></div></div>
+  <div id="load-percent">0%</div>
+  <div class="hint">탐정 도구와 사건 기록을 준비하고 있어요.</div>
+</div>
+<div id="app">
+<div class="game-shell">
+  <div class="topbar"><strong>🐾 고양이 탐정 : 수상한 오후</strong><span id="top-status">탐정 사무소</span></div>
+
+  <section id="screen-title" class="screen hero active">
+    <div class="hero-cat">🐈‍⬛</div>
+    <div class="eyebrow">A CAT DETECTIVE MYSTERY</div>
+    <h1>고양이 탐정<br>수상한 오후</h1>
+    <p class="subtitle">작은 흔적 하나가 사건의 진실을 바꿉니다.<br>당신의 추리로 감춰진 이야기를 밝혀내세요.</p>
+    <div class="menu-buttons">
+      <button class="btn btn-primary" onclick="startNew()">새 수사</button>
+      <button class="btn btn-secondary" onclick="loadCase()">불러오기</button>
+      <button class="btn btn-secondary" onclick="showCompleted()">종결된 수사</button>
+    </div>
+    <p class="hint" id="title-greeting" style="margin-top:24px"></p>
+  </section>
+
+  <section id="screen-nickname" class="screen">
+    <div class="eyebrow">DETECTIVE REGISTRATION</div>
+    <h2>탐정님, 이름을 알려주세요.</h2>
+    <p class="subtitle">수사 의뢰서와 사건 기록에 사용할 닉네임을 정해주세요.</p>
+    <div class="panel stack">
+      <label class="field-label" for="nickname">탐정 닉네임</label>
+      <input id="nickname" maxlength="12" placeholder="예: 밤톨 탐정" autocomplete="nickname">
+      <div class="hint">한글 최대 12자, 영문 최대 12자까지 사용할 수 있어요. 공백은 허용되며, 한글·영문·숫자·밑줄만 사용할 수 있습니다.</div>
+      <div id="nickname-error" class="error"></div>
+      <button class="btn btn-primary" onclick="saveNickname()">탐정 등록하기</button>
+    </div>
+    <button class="btn btn-quiet" style="margin-top:16px;align-self:flex-start" onclick="go('title')">뒤로</button>
+  </section>
+
+  <section id="screen-episodes" class="screen">
+    <div class="eyebrow">CASE FILES</div>
+    <div class="row between wrap episode-heading"><h2>새 수사</h2><span class="tag currency-pill">🐟 츄르 <b id="churu-count">0</b>개</span></div>
+    <p class="subtitle">사건을 선택해 수사를 시작하세요.</p>
+    <div class="panel episode-card">
+      <div class="episode-art">💎</div>
+      <div>
+        <div class="row wrap" style="margin-bottom:8px"><span class="tag">EP. 01</span><span class="tag">초급 · 도난 사건</span></div>
+        <h3>사라진 은방울꽃 브로치</h3>
+        <p class="hint">비 오는 저녁, 저택의 장식장에서 소중한 유품이 사라졌다. 세 명의 용의자, 엇갈리는 진술.</p>
+        <button class="btn btn-primary" onclick="openLetter()">수사 시작하기</button>
+      </div>
+    </div>
+    <div class="panel episode-card ep2-episode-card">
+      <div class="episode-art">🥀</div>
+      <div>
+        <div class="row wrap" style="margin-bottom:8px"><span class="tag">EP. 02</span><span class="tag">중급 · 살인 미스터리</span></div>
+        <h3>맹세와 붉은 연회</h3>
+        <p class="hint">결계로 봉쇄된 드라켄펠스 성. 잠긴 집무실에서 영주 올렉이 숨진 채 발견된다. 네 명의 용의자, 그리고 마법.</p>
+        <button class="btn btn-primary" onclick="openEpisode2()">수사 시작하기</button>
+      </div>
+    </div>
+    <div class="panel episode-card ep2-episode-card">
+      <div class="episode-art">🐟</div>
+      <div>
+        <div class="row wrap" style="margin-bottom:8px"><span class="tag">EP. 03</span><span class="tag">초급 · 캐주얼</span></div>
+        <h3>내 참치캔 돌려줘</h3>
+        <p class="hint">탐정의 집에서 사라진 수제 프리미엄 참치 캔. 도대체 어디로 간거냥?.</p>
+        <button class="btn btn-primary" onclick="openEpisode3()">수사 시작하기</button>
+      </div>
+    </div>
+
+    <div class="panel episode-card ep2-episode-card">
+      <div class="episode-art">💠</div>
+      <div>
+        <div class="row wrap" style="margin-bottom:8px"><span class="tag">EP. 04</span><span class="tag">중급 · 도난 사건</span></div>
+        <h3>별빛 수정의 행방</h3>
+        <p class="hint">축제 전날 밤, 난쟁이 마을의 수호 보물인 별빛 수정이 잠긴 회관에서 사라졌습니다.</p>
+        <button class="btn btn-primary" onclick="openEpisode4()">수사 시작하기</button>
+      </div>
+    </div>
+
+    <button class="btn btn-quiet" style="margin-top:14px;align-self:flex-start" onclick="go('title')">메인 메뉴</button>
+  </section>
+
+  <!-- EPISODE 2: 맹세와 붉은 연회 -->
+  <section id="screen-ep2-letter" class="screen ep2-screen">
+    <div class="eyebrow">CASE FILE · EPISODE 02</div><h2>맹세와 붉은 연회</h2>
+    <div class="letter ep2-letter"><div class="letter-title">⚜ 드라켄펠스 성 사건 의뢰서 ⚜</div>
+      <p><strong>수신인:</strong> <span class="player-name"></span> 탐정님</p>
+      <p>드라켄펠스 성은 마법 결계로 봉쇄되어 있습니다. 밤 10시, 영주 올렉이 안에서 잠긴 3층 집무실에서 숨진 채 발견되었습니다.</p>
+      <p>가슴에는 단검이 꽂혀 있고 입가에는 검붉은 피와 정체불명의 거품이 남아 있습니다. 방은 잠겨 있었으며, 성 안의 네 사람 모두 숨기는 것이 있는 듯합니다.</p>
+      <p>단검이 치명상을 입힌 것인지, 잠긴 방에서 누가 어떻게 빠져나왔는지, 그리고 올렉을 실제로 죽게 한 원인이 무엇인지 밝혀 주세요.</p>
+    </div>
+    <div class="row wrap ep2-actions"><button class="btn btn-primary" onclick="beginEpisode2()">현장으로 이동</button><button class="btn btn-quiet" onclick="go('episodes')">사건 선택으로</button></div>
+  </section>
+
+  <section id="screen-ep2-scene" class="screen ep2-screen">
+    <div class="row between wrap"><div><div class="eyebrow">SCENE INVESTIGATION</div><h2>3층 영주의 집무실</h2></div><button class="btn btn-gold btn-small" onclick="go('ep2-table')">수사 테이블 →</button></div>
+    <p class="subtitle">현장의 단서를 선택해 조사하세요. 각 단서는 언제든 수사 테이블에서 다시 확인할 수 있습니다.</p>
+    <div class="statusbar"><div class="stat">🔎 현장 단서 <b id="ep2-scene-count">0</b>/5</div><div class="stat">📜 발견 단서 <b id="ep2-total-count">0</b>/17</div><div class="stat">🧭 남은 조사 <b id="ep2-tokens-left">15</b></div></div>
+    <div class="ep2-scene-board">
+      <div class="ep2-scene-illustration" role="img" aria-label="영주의 집무실 현장 이미지">
+        <button class="ep2-hotspot ep2-h1" onclick="inspectEp2('A1')">1</button><button class="ep2-hotspot ep2-h2" onclick="inspectEp2('A2')">2</button><button class="ep2-hotspot ep2-h3" onclick="inspectEp2('A3')">3</button><button class="ep2-hotspot ep2-h4" onclick="inspectEp2('A4')">4</button><button class="ep2-hotspot ep2-h5" onclick="inspectEp2('A5')">5</button>
+      </div>
+      <div class="ep2-legend"><h3>현장 조사 지점</h3><p><b>1.</b> 영주의 시신</p><p><b>2.</b> 깨진 와인 잔과 바닥</p><p><b>3.</b> 책상 위 스크롤</p><p><b>4.</b> 책장 뒤 비밀 통로</p><p><b>5.</b> 찢어진 노트 조각</p><button class="btn btn-secondary" onclick="showClientInfo()">의뢰인이 준 정보</button><button class="btn btn-secondary" onclick="go('ep2-suspects')">용의자 조사 →</button></div>
+    </div>
+    <div id="ep2-scene-found" class="ep2-found-strip"></div>
+  </section>
+
+  <section id="screen-ep2-suspects" class="screen ep2-screen">
+    <div class="row between wrap"><div><div class="eyebrow">SUSPECT INTERVIEWS</div><h2>용의자 조사</h2></div><button class="btn btn-gold btn-small" onclick="go('ep2-table')">수사 테이블 →</button></div>
+    <p class="subtitle">알리바이와 발견한 단서를 다시 확인해 보세요.</p><div class="statusbar"><div class="stat">🧭 남은 조사 <b id="ep2-suspect-tokens-left">15</b></div></div>
+    <div class="ep2-suspect-grid">
+      <article class="panel ep2-suspect"><div class="ep2-avatar">🛡️</div><h3>엘레나</h3><button class="btn btn-gold btn-small" onclick="showAlibi('elena')">알리바이</button><p class="hint">성기사단장 · 엄격하고 원칙적</p><button class="btn btn-secondary" onclick="inspectEp2('E1')">성물 보관함</button><button class="btn btn-secondary" onclick="inspectEp2('E2')">손거울과 열쇠</button><button class="btn btn-secondary" onclick="inspectEp2('E3')">루시안에 대한 진술</button></article>
+      <article class="panel ep2-suspect"><div class="ep2-avatar">🪄</div><h3>루시안</h3><button class="btn btn-gold btn-small" onclick="showAlibi('lucian')">알리바이</button><p class="hint">마법학자 · 독과 지연 마법에 정통</p><button class="btn btn-secondary" onclick="inspectEp2('L1')">빈 독병</button><button class="btn btn-secondary" onclick="inspectEp2('L2')">마법 제작 흔적</button><button class="btn btn-secondary" onclick="inspectEp2('L3')">엘레나에 대한 진술</button></article>
+      <article class="panel ep2-suspect"><div class="ep2-avatar">🌹</div><h3>이사벨라</h3><button class="btn btn-gold btn-small" onclick="showAlibi('isabella')">알리바이</button><p class="hint">공작부인 · 영주와 비밀 연인 관계</p><button class="btn btn-secondary" onclick="inspectEp2('I1')">피 묻은 수건과 와인</button><button class="btn btn-secondary" onclick="inspectEp2('I2')">의자의 흔적</button><button class="btn btn-secondary" onclick="inspectEp2('I3')">루시안에 대한 진술</button></article>
+      <article class="panel ep2-suspect"><div class="ep2-avatar">🗝️</div><h3>베르트</h3><button class="btn btn-gold btn-small" onclick="showAlibi('bert')">알리바이</button><p class="hint">집사 · 성의 열쇠를 관리</p><button class="btn btn-secondary" onclick="inspectEp2('B1')">마스터 키</button><button class="btn btn-secondary" onclick="inspectEp2('B2')">비밀 통로 지도</button><button class="btn btn-secondary" onclick="inspectEp2('B3')">이사벨라에 대한 진술</button></article>
+    </div>
+    <div class="row wrap ep2-actions"><button class="btn btn-primary" onclick="go('ep2-scene')">현장으로 돌아가기</button><button class="btn btn-gold" onclick="go('ep2-table')">수사 테이블 열기</button></div>
+  </section>
+
+  <section id="screen-ep2-table" class="screen ep2-screen">
+    <div class="row between wrap"><div><div class="eyebrow">EVIDENCE BOARD</div><h2>수사 테이블</h2></div><button class="btn btn-quiet btn-small" onclick="go('ep2-scene')">현장으로 돌아가기</button></div>
+    <p class="subtitle">발견한 단서를 누르면 상세 내용을 다시 볼 수 있습니다. 아직 발견하지 않은 단서는 표시되지 않습니다.</p>
+    <div class="ep2-table-stats"><span class="tag">발견 단서 <b id="ep2-table-count">0</b>/17</span><span class="tag">현장 단서 A</span><span class="tag">용의자 단서 B</span></div>
+    <div id="ep2-evidence-list" class="ep2-evidence-list"><p class="hint">아직 발견한 단서가 없습니다.</p></div>
+    <div class="row wrap ep2-actions"><button class="btn btn-secondary" onclick="go('ep2-suspects')">용의자 추가 조사</button><button class="btn btn-primary" onclick="go('ep2-accuse')">추리와 사건 종결 →</button></div>
+  </section>
+
+  <section id="screen-ep2-accuse" class="screen ep2-screen">
+    <div class="row between wrap"><div><div class="eyebrow">FINAL DEDUCTION</div><h2>붉은 연회의 진실</h2></div><button class="btn btn-secondary btn-small" onclick="go('ep2-table')">← 수사 테이블로 돌아가 단서 확인</button></div><p class="subtitle">단서를 종합해 사건의 구조를 설명하세요. 이 사건은 한 명의 범인만 지목해서는 풀리지 않습니다. 답변 화면에서 나가도 작성 중인 답은 유지됩니다.</p>
+    <div class="panel ep2-form-panel">
+      <label for="ep2-cause"><b>1. 올렉의 직접적인 사망 원인은?</b></label><select id="ep2-cause"><option value="">선택하세요</option><option value="stab">가슴의 단검으로 인한 자상</option><option value="poison">드래곤 브레스 독</option><option value="magic">지연 마법 자체</option></select>
+      <label for="ep2-killer"><b>2. 단검을 다시 꽂고 밀실을 조작한 인물은?</b></label><select id="ep2-killer"><option value="">선택하세요</option><option value="elena">엘레나</option><option value="lucian">루시안</option><option value="isabella">이사벨라</option><option value="bert">베르트</option></select>
+      <label for="ep2-poisoner"><b>3. 올렉에게 독을 먹이고 소리 지연 스크롤을 설치한 인물은?</b></label><select id="ep2-poisoner"><option value="">선택하세요</option><option value="elena">엘레나</option><option value="lucian">루시안</option><option value="isabella">이사벨라</option><option value="bert">베르트</option></select>
+      <label for="ep2-relation"><b>4. 공범이 있다면 그들의 관계는 무엇일까?</b></label><select id="ep2-relation"><option value="">선택하세요</option><option value="team">둘은 공모자이며 함께 계획했다.</option><option value="separate">각자 다른 목적의 범행을 했으며, 공모를 입증할 증거는 없다.</option><option value="one">공범은 없다.</option></select>
+      <label for="ep2-explanation"><b>5. 핵심 증거를 연결해 설명하기</b></label><textarea id="ep2-explanation" rows="4" placeholder="예: 독의 발동 시간, 단검의 의미, 마스터 키와 비밀 통로를 연결해 설명하세요."></textarea>
+      <div id="ep2-accuse-error" class="error"></div><div class="row wrap ep2-actions"><button class="btn btn-secondary" onclick="go('ep2-table')">단서 다시 확인하기</button><button class="btn btn-primary" onclick="submitEpisode2()">추리 제출하기</button></div>
+    </div>
+  </section>
+
+    <section id="screen-ep2-gratitude" class="screen ep2-screen">
+    <div class="eyebrow">A LETTER OF GRATITUDE</div>
+    <h2>이사벨라 공작부인의 편지</h2>
+    <div class="letter ep2-letter">
+      <div class="letter-title">✉ 감사의 편지 ✉</div>
+      <p><strong>수신인:</strong> <span class="player-name"></span> 탐정님</p>
+      <p><strong>발신인:</strong> 이사벨라 공작부인</p>
+      <hr style="border:0;border-top:1px solid #ddcba6;margin:20px 0">
+      <p>제가 올렉에게 큰 잘못을 한 건 부정할 수 없어요. 하지만... 저는 그래도 올렉이 억울하지 않게 진범을 밝혀준 <span class="player-name"></span> 탐정님께 감사드려요. 이건 감사의 의미로 드리는 답례입니다. 앞으로는 저도 많은 사람들을 도우며 살아볼까 해요.</p>
+      <div class="letter-actions"><button class="btn btn-primary" onclick="claimEpisode2Reward()">확인 · 츄르 받기</button></div>
+    </div>
+    <div class="panel" style="max-width:690px;margin:0 auto;width:100%;text-align:center"><strong>감사의 답례</strong><p class="hint" style="margin:6px 0 0">츄르 1개를 받고 사건 선택으로 돌아갑니다.</p></div>
+  </section>
+
+  <section id="screen-ep2-result" class="screen ep2-screen">
+    <div class="eyebrow">CASE CLOSED</div><h2 id="ep2-result-title">사건 기록</h2><div id="ep2-result-content" class="panel ep2-result-content"></div>
+    <div class="row wrap ep2-actions"><button class="btn btn-primary" onclick="go('ep2-gratitude')">감사 편지 확인하기</button><button class="btn btn-secondary" onclick="go('ep2-table')">단서 다시 보기</button></div>
+  </section>
+
+  <section id="screen-ep3-letter" class="screen ep2-screen">
+    <div class="eyebrow">CASE FILE · EPISODE 03</div><h2>사라진 최고급 참치 캔의 행방</h2>
+    <div class="letter ep2-letter"><div class="letter-title">🐾 탐정 본인에게 도착한 긴급 의뢰서 🐾</div>
+      <p><strong>수신인:</strong> <span class="player-name"></span> 탐정님</p>
+      <p><strong>발신인:</strong> 고양이 탐정 본인</p>
+      <hr style="border:0;border-top:1px solid #ddcba6;margin:20px 0">
+      <p>냥 냐냐냥! 애오오옭!!</p>
+      <p>(큰일이야! 집사가 얼마 전에 큰돈을 주고 사냥해 온 수제 프리미엄 참치 캔이 거실 테이블 위에서 감쪽같이 사라졌어!)</p>
+      <p>사건은 오후 2시에서 3시 사이에 일어난 것 같아. 현장에는 물그릇이 엎어져 있고, 소파 구석에는 수상한 박스가 놓여 있어. </p>
+      <p>여긴 내 집이고, 사라진 간식도 내 몫이야. 이 사건은 내가 직접 해결하겠어! 현장의 흔적과 모두의 말을 꼼꼼히 조사해 범인과 참치 캔의 행방을 밝혀내자.</p>
+      <div class="letter-actions"><button class="btn btn-primary" onclick="beginEpisode3()">내 사건 수사 시작!</button></div>
+    </div>
+    <div class="row wrap ep2-actions"><button class="btn btn-quiet" onclick="go('episodes')">사건 선택으로</button></div>
+  </section>
+
+  <section id="screen-ep3-scene" class="screen ep2-screen ep3-screen">
+    <div class="row between wrap"><div><div class="eyebrow">SCENE INVESTIGATION</div><h2>탐정의 집 · 거실</h2></div><button class="btn btn-gold btn-small" onclick="go('ep3-table')">수사 테이블 →</button></div>
+    <p class="subtitle">현장 번호를 눌러 조사하세요. 발견한 단서는 수사 테이블에서 다시 확인할 수 있습니다.</p>
+    <div class="statusbar"><div class="stat">🔎 현장 단서 <b id="ep3-scene-count">0</b>/4</div><div class="stat">📜 발견 단서 <b id="ep3-total-count">0</b>/8</div><div class="stat">🧭 남은 조사 <b id="ep3-tokens-left">6</b></div><div class="stat">🐾 츄르 <b id="ep3-churu-count">0</b></div></div>
+    <div class="ep2-scene-board">
+      <div class="ep3-scene-illustration" role="img" aria-label="탐정의 집 거실 현장 이미지">
+        <button class="ep2-hotspot ep3-h1" onclick="inspectEp3('S1')" title="엎질러진 물그릇">1</button><button class="ep2-hotspot ep3-h2" onclick="inspectEp3('S2')" title="소파 구석의 박스">2</button><button class="ep2-hotspot ep3-h3" onclick="inspectEp3('S3')" title="테이블 다리 자국">3</button><button class="ep2-hotspot ep3-h4" onclick="inspectEp3('S4')" title="영수증 조각">4</button>
+      </div>
+      <div class="ep2-legend"><h3>현장 조사 지점</h3><p><b>1.</b> 엎질러진 물그릇</p><p><b>2.</b> 소파 구석의 의심스러운 박스</p><p><b>3.</b> 테이블 다리의 찌그러진 자국</p><p><b>4.</b> 집사의 외투에서 떨어진 영수증</p><p class="hint">기본 조사 6회 · 전체 단서 8개</p><button class="btn btn-secondary" onclick="showClientInfoEp3()">사건 의뢰 내용</button><button class="btn btn-primary" onclick="go('ep3-suspects')">주변 인물 조사 →</button></div>
+    </div>
+    <div id="ep3-scene-found" class="ep2-found-strip"></div>
+  </section>
+
+  <section id="screen-ep3-suspects" class="screen ep2-screen ep3-screen">
+    <div class="row between wrap"><div><div class="eyebrow">WITNESS INTERVIEWS</div><h2>주변 인물 조사</h2></div><button class="btn btn-gold btn-small" onclick="go('ep3-table')">수사 테이블 →</button></div>
+    <p class="subtitle">진술과 로봇 청소기의 먼지통을 조사하세요. 단서 확인에는 조사 횟수가 사용됩니다.</p>
+    <div class="statusbar"><div class="stat">🧭 남은 조사 <b id="ep3-suspect-tokens-left">6</b></div><div class="stat">📜 발견 단서 <b id="ep3-suspect-found">0</b>/8</div><div class="stat">🐾 츄르 <b id="ep3-suspect-churu">0</b></div></div>
+    <div class="ep2-suspect-grid">
+      <article class="panel ep2-suspect"><div class="ep2-avatar">🧑‍🍳</div><h3>집사</h3><p class="hint">다이어트 중이라며 몹시 예민하다</p><button class="btn btn-secondary" onclick="inspectEp3('H1')">진술 조사</button></article>
+      <article class="panel ep2-suspect"><div class="ep2-avatar">🐕</div><h3>초코</h3><p class="hint">옆집 강아지 · 호기심이 많다</p><button class="btn btn-secondary" onclick="inspectEp3('C1')">진술 조사</button></article>
+      <article class="panel ep2-suspect"><div class="ep2-avatar">🕊️</div><h3>구구</h3><p class="hint">베란다에 자주 오는 비둘기</p><button class="btn btn-secondary" onclick="inspectEp3('G1')">목격 진술 조사</button></article>
+      <article class="panel ep2-suspect"><div class="ep2-avatar">🤖</div><h3>싹싹이</h3><p class="hint">센서 고장 증상이 있는 로봇 청소기</p><button class="btn btn-secondary" onclick="inspectEp3('R1')">먼지통 조사</button></article>
+    </div>
+    <div class="row wrap ep2-actions"><button class="btn btn-primary" onclick="go('ep3-scene')">현장으로 돌아가기</button><button class="btn btn-gold" onclick="go('ep3-table')">수사 테이블 열기</button></div>
+  </section>
+
+  <section id="screen-ep3-table" class="screen ep2-screen ep3-screen">
+    <div class="row between wrap"><div><div class="eyebrow">EVIDENCE BOARD</div><h2>수사 테이블</h2></div><button class="btn btn-quiet btn-small" onclick="go('ep3-scene')">현장으로 돌아가기</button></div>
+    <p class="subtitle">발견한 단서를 눌러 내용을 다시 확인하세요. 아직 조사하지 않은 단서는 여기에 나타나지 않습니다.</p>
+    <div class="ep2-table-stats"><span class="tag">발견 단서 <b id="ep3-table-count">0</b>/8</span><span class="tag">현장 단서 4개</span><span class="tag">진술·물건 단서 4개</span><span class="tag">남은 조사 <b id="ep3-table-tokens">6</b></span></div>
+    <div id="ep3-evidence-list" class="ep2-evidence-list"><p class="hint">아직 발견한 단서가 없습니다.</p></div>
+    <div class="row wrap ep2-actions"><button class="btn btn-secondary" onclick="go('ep3-suspects')">주변 인물 조사</button><button class="btn btn-primary" onclick="go('ep3-accuse')">최종 추리로 →</button></div>
+  </section>
+
+  <section id="screen-ep3-accuse" class="screen ep2-screen ep3-screen">
+    <div class="row between wrap"><div><div class="eyebrow">FINAL DEDUCTION</div><h2>내 참치캔 돌려줘</h2></div><button class="btn btn-secondary btn-small" onclick="go('ep3-table')">← 단서 다시 보기</button></div>
+    <p class="subtitle">증거를 연결해 범인과 참치 캔의 행방, 진짜 동기를 밝혀주세요.</p>
+    <div class="panel ep2-form-panel">
+      <label for="ep3-culprit"><b>1. 이 사건을 일으킨 진짜 범인은 누구입니까?</b></label><select id="ep3-culprit"><option value="">선택하세요</option><option value="butler">집사</option><option value="choco">초코</option><option value="gugu">구구</option><option value="robot">싹싹이</option></select>
+      <label for="ep3-trick"><b>2. 사라진 참치 캔은 어떤 트릭으로 소파 밑 박스에 들어갔습니까?</b></label><select id="ep3-trick"><option value="">선택하세요</option><option value="robot-slip">로봇 청소기가 미끄러져 테이블을 들이받았고, 떨어진 캔을 밀고 가 박스에 넣었다.</option><option value="dog-steal">초코가 캔을 물고 소파 밑에 숨겼다.</option><option value="pigeon-steal">구구가 베란다로 캔을 가져갔다.</option><option value="butler-hide">집사가 직접 박스에 넣고 흔적을 조작했다.</option></select>
+      <label for="ep3-evidence"><b>3. 범행 동기를 드러낸 결정적 증거는?</b></label><select id="ep3-evidence"><option value="">선택하세요</option><option value="receipt">동물병원 예약금 영수증 조각</option><option value="dustbin">로봇 청소기의 먼지통</option><option value="bowl">엎질러진 물그릇</option></select>
+      <label for="ep3-motive"><b>4. 범행의 동기는?</b></label><select id="ep3-motive"><option value="">선택하세요</option><option value="fasting">탐정 고양이는 금식이 필요했다.</option><option value="diet">사고였다.</option><option value="steal">범인이 참치 캔을 먹으려고 했다.</option></select>
+      <div id="ep3-accuse-error" class="error"></div><div class="row wrap ep2-actions"><button class="btn btn-secondary" onclick="go('ep3-table')">단서 다시 확인하기</button><button class="btn btn-primary" onclick="submitEpisode3()">추리 제출하기</button></div>
+    </div>
+  </section>
+
+  <section id="screen-ep3-result" class="screen ep2-screen ep3-screen">
+    <div class="eyebrow">CASE SOLVED</div><h2>내 참치캔 돌려줘 사건 해결!</h2>
+    <div class="panel ep2-result-content"><h3>🐟 진실이 밝혀졌습니다</h3><p>범인은 집사였어요. 내일 오전 10시, 탐정 고양이의 건강검진 예약이 있었습니다. 검진 전에는 금식해야 했지만, 집사는 참치 캔을 직접 치우면 탐정님이 크게 떼를 쓸 걸 알고 있었죠.</p><p>집사는 참치 캔을 로봇 청소기가 움직이는 길에 두고, 청소기가 충전소로 돌아가도록 했습니다. 초코가 엎지른 물에 싹싹이의 바퀴가 미끄러지면서 테이블 다리를 들이받았고, 떨어진 캔을 밀어 소파 구석 박스까지 옮겼습니다. 먼지통의 비닐 라벨과 기름기, 테이블의 검은 고무 자국이 이 경로를 보여줍니다.</p><p>집사의 다이어트 주장은 핑계였어요. 외투에서 떨어진 동물병원 영수증이 진짜 이유, 탐정님의 건강검진 전 금식을 밝혀냈습니다. 사건은 해결됐지만… 참치 캔은 검진이 끝난 뒤에 받기로 약속했답니다!</p></div>
+    <div class="row wrap ep2-actions"><button class="btn btn-primary" onclick="go('ep3-gratitude')">집사의 편지 확인하기</button><button class="btn btn-secondary" onclick="go('ep3-table')">단서 다시 보기</button></div>
+  </section>
+
+  <section id="screen-ep3-gratitude" class="screen ep2-screen ep3-screen">
+    <div class="eyebrow">A LETTER OF GRATITUDE</div><h2>집사의 사과 편지</h2>
+    <div class="letter ep2-letter"><div class="letter-title">✉ 탐정님께 보내는 편지 ✉</div>
+      <p><strong>수신인:</strong> <span class="player-name"></span> 탐정님</p><p><strong>발신인:</strong> 집사</p>
+      <hr style="border:0;border-top:1px solid #ddcba6;margin:20px 0">
+      <p>건강검진 전 금식을 시키려고 참치 캔을 치운 건 맞아. 하지만 직접 말하면 속상해할 것 같아 괜한 소동을 벌인 것 같아. 걱정 끼쳐서 미안해. 검진이 끝나면 약속대로 맛있는 간식을 준비할게! 아, 그리고 요즘 저 종이 박스를 정말 좋아하는 것 같더라? 캣타워도 사뒀는데.. 역시 상자가 최고인가봐.</p>
+      <div class="letter-actions"><button class="btn btn-primary" onclick="claimEpisode3Reward()">확인 · 츄르 받기</button></div>
+    </div>
+    <div class="panel" style="max-width:690px;margin:0 auto;width:100%;text-align:center"><strong>감사의 답례</strong><p class="hint" style="margin:6px 0 0">츄르 1개를 받고 사건 선택으로 돌아갑니다.</p></div>
+  </section>
+
+  <section id="screen-ep4-letter" class="screen ep2-screen">
+    <div class="eyebrow">CASE FILE · EPISODE 04</div><h2>별빛 수정의 행방</h2>
+    <div class="letter ep2-letter"><div class="letter-title">🍄 난쟁이 마을 사건 의뢰서 🍄</div>
+      <p><strong>수신인:</strong> <span class="player-name"></span> 탐정님</p><p><strong>발신인:</strong> 난쟁이 마을 촌장</p>
+      <hr style="border:0;border-top:1px solid #ddcba6;margin:20px 0">
+      <p>깊은 숲속, 버섯 지붕의 집과 도토리 가로등이 늘어선 우리 마을에는 오래된 수호 보물인 ‘별빛 수정’이 있습니다. 수정은 밤마다 은은히 빛나 숲길을 밝혀 주고, 야생 동물들이 안전하게 마을을 찾도록 도와줍니다.</p>
+      <p>축제 전날 밤, 마을 회관에 보관하던 별빛 수정이 사라졌습니다. 회관 문은 안쪽에서 잠겨 있었고 강제로 부서진 흔적은 없습니다. 뒤편 창문은 좁지만 난쟁이 한 명은 겨우 통과할 수 있고, 수정도 한 팔로 안아 옮길 수 있는 크기입니다.</p>
+      <p>사건 당일 회관과 수정에 접근할 수 있었던 사람은 세 명입니다. 정식 열쇠를 관리하는 경비 루비, 수정의 점검과 세공을 맡은 파루, 숲에서 약초와 광물을 채집하는 모스입니다. 세 사람 모두 사건과 관련된 행동을 할 기회가 있었습니다.</p>
+      <p>축제의 밤에 마을의 길을 밝힐 수 있도록, 누가 수정을 가져갔는지와 회관에 어떻게 드나들었는지 밝혀 주세요.</p>
+      <div class="letter-actions"><button class="btn btn-primary" onclick="beginEpisode4()">수사 시작하기</button></div>
+    </div>
+    <div class="row wrap ep2-actions"><button class="btn btn-quiet" onclick="go('episodes')">사건 선택으로</button></div>
+  </section>
+
+  <section id="screen-ep4-scene" class="screen ep2-screen ep4-screen">
+    <div class="row between wrap"><div><div class="eyebrow">SCENE INVESTIGATION</div><h2>난쟁이 마을 회관</h2></div><button class="btn btn-gold btn-small" onclick="go('ep4-table')">수사 테이블 →</button></div>
+    <p class="subtitle">회관 안팎의 번호를 눌러 조사하세요. 발견한 단서는 수사 테이블에서 다시 확인할 수 있습니다.</p>
+    <div class="statusbar"><div class="stat">🔎 현장 단서 <b id="ep4-scene-count">0</b>/5</div><div class="stat">📜 발견 단서 <b id="ep4-total-count">0</b>/14</div><div class="stat">🧭 남은 조사 <b id="ep4-tokens-left">12</b></div><div class="stat">🐾 츄르 <b id="ep4-churu-count">0</b></div></div>
+    <div class="ep2-scene-board">
+      <div class="ep4-scene-illustration" role="img" aria-label="난쟁이 마을 회관 현장 이미지">
+        <button class="ep2-hotspot ep4-h1" onclick="inspectEp4('S1')" title="잠긴 회관 문">1</button><button class="ep2-hotspot ep4-h2" onclick="inspectEp4('S2')" title="별빛 수정의 받침대">2</button><button class="ep2-hotspot ep4-h3" onclick="inspectEp4('S3')" title="푸른 가루와 발자국">3</button><button class="ep2-hotspot ep4-h4" onclick="inspectEp4('S4')" title="회관 뒤편 창문">4</button><button class="ep2-hotspot ep4-h5" onclick="inspectEp4('S5')" title="방문 기록판">5</button>
+      </div>
+      <div class="ep2-legend"><h3>현장 조사 지점</h3><p><b>1.</b> 잠긴 회관 문</p><p><b>2.</b> 별빛 수정의 받침대</p><p><b>3.</b> 푸른 가루와 발자국</p><p><b>4.</b> 회관 뒤편 창문</p><p><b>5.</b> 방문 기록판</p><p class="hint">기본 조사 12회 · 전체 단서 14개</p><button class="btn btn-secondary" onclick="showClientInfoEp4()">의뢰인이 준 정보</button><button class="btn btn-primary" onclick="go('ep4-suspects')">용의자 조사 →</button></div>
+    </div>
+    <div id="ep4-scene-found" class="ep2-found-strip"></div>
+  </section>
+
+  <section id="screen-ep4-suspects" class="screen ep2-screen ep4-screen">
+    <div class="row between wrap"><div><div class="eyebrow">SUSPECT INTERVIEWS</div><h2>용의자 조사</h2></div><button class="btn btn-gold btn-small" onclick="go('ep4-table')">수사 테이블 →</button></div>
+    <p class="subtitle">용의자마다 소지품 두 가지와 다른 사람에 대한 증언이 있습니다. 조사한 단서는 언제든 수사 테이블에서 다시 볼 수 있어요.</p>
+    <div class="statusbar"><div class="stat">🧭 남은 조사 <b id="ep4-suspect-tokens-left">12</b></div><div class="stat">📜 발견 단서 <b id="ep4-suspect-found">0</b>/14</div><div class="stat">🐾 츄르 <b id="ep4-suspect-churu">0</b></div></div>
+    <div class="ep2-suspect-grid">
+      <article class="panel ep2-suspect"><div class="ep2-avatar">🟥</div><h3>루비</h3><p class="hint">빨간 옷의 마을 경비 · 정식 열쇠 관리자</p><button class="btn btn-secondary" onclick="inspectEp4('R1')">회관 열쇠 꾸러미</button><button class="btn btn-secondary" onclick="inspectEp4('R2')">붉은 밀랍과 봉인 도장</button><button class="btn btn-secondary" onclick="inspectEp4('R3')">목격담</button></article>
+      <article class="panel ep2-suspect"><div class="ep2-avatar">🟦</div><h3>파루</h3><p class="hint">파란 옷의 보석 세공사 · 수정 점검 담당</p><button class="btn btn-secondary" onclick="inspectEp4('B1')">푸른 연마 가루</button><button class="btn btn-secondary" onclick="inspectEp4('B2')">은제 세공 도구</button><button class="btn btn-secondary" onclick="inspectEp4('B3')">모스와 루비에 대한 증언</button></article>
+      <article class="panel ep2-suspect"><div class="ep2-avatar">🟩</div><h3>모스</h3><p class="hint">초록 옷의 약초꾼 · 숲과 광물을 연구</p><button class="btn btn-secondary" onclick="inspectEp4('G1')">약초 주머니</button><button class="btn btn-secondary" onclick="inspectEp4('G2')">은빛 실타래</button><button class="btn btn-secondary" onclick="inspectEp4('G3')">루비와 파루에 대한 증언</button></article>
+    </div>
+    <div class="row wrap ep2-actions"><button class="btn btn-primary" onclick="go('ep4-scene')">현장으로 돌아가기</button><button class="btn btn-gold" onclick="go('ep4-table')">수사 테이블 열기</button></div>
+  </section>
+
+  <section id="screen-ep4-table" class="screen ep2-screen ep4-screen">
+    <div class="row between wrap"><div><div class="eyebrow">EVIDENCE BOARD</div><h2>수사 테이블</h2></div><button class="btn btn-quiet btn-small" onclick="go('ep4-scene')">현장으로 돌아가기</button></div>
+    <p class="subtitle">발견한 단서를 눌러 상세 내용을 다시 확인하세요.</p>
+    <div class="ep2-table-stats"><span class="tag">발견 단서 <b id="ep4-table-count">0</b>/14</span><span class="tag">현장 단서 S</span><span class="tag">용의자 단서 R · B · G</span><span class="tag">남은 조사 <b id="ep4-table-tokens">12</b></span></div>
+    <div id="ep4-evidence-list" class="ep2-evidence-list"><p class="hint">아직 발견한 단서가 없습니다.</p></div>
+    <div class="row wrap ep2-actions"><button class="btn btn-secondary" onclick="go('ep4-suspects')">용의자 추가 조사</button><button class="btn btn-primary" onclick="go('ep4-accuse')">최종 추리로 →</button></div>
+  </section>
+
+  <section id="screen-ep4-accuse" class="screen ep2-screen ep4-screen">
+    <div class="row between wrap"><div><div class="eyebrow">FINAL DEDUCTION</div><h2>별빛 수정은 어디로 갔을까?</h2></div><button class="btn btn-secondary btn-small" onclick="go('ep4-table')">← 단서 다시 보기</button></div>
+    <p class="subtitle">가장 수상한 사람을 고르는 데서 그치지 말고, 접근 경로와 물증의 연결을 설명해 주세요.</p>
+    <div class="panel ep2-form-panel">
+      <label for="ep4-culprit"><b>1. 누가 별빛 수정을 가져갔습니까?</b></label><select id="ep4-culprit"><option value="">선택하세요</option><option value="ruby">루비</option><option value="paru">파루</option><option value="moss">모스</option></select>
+      <label for="ep4-access"><b>2. 범인은 어떻게 회관에 접근했습니까?</b></label><select id="ep4-access"><option value="">선택하세요</option><option value="window">좁은 뒤편 창문으로 드나들었다.</option><option value="key">루비의 정식 열쇠로 문을 열었다.</option><option value="force">문을 부수고 들어간 뒤 안에서 잠갔다.</option></select>
+      <label for="ep4-route"><b>3. 수정은 어떤 경로로 반출되었습니까?</b></label><textarea id="ep4-route" rows="3" placeholder="창문과 천, 작업실 등 단서에서 확인한 경로를 적어주세요."></textarea>
+      <label for="ep4-proof"><b>4. 현장에 남은 물증은 범행과 어떻게 연결됩니까?</b></label><textarea id="ep4-proof" rows="4" placeholder="푸른 가루, 발자국, 세공 도구의 흔적 등 단서들을 서로 비교해 설명해주세요."></textarea>
+      <div id="ep4-accuse-error" class="error"></div><div class="row wrap ep2-actions"><button class="btn btn-secondary" onclick="go('ep4-table')">단서 다시 확인하기</button><button class="btn btn-primary" onclick="submitEpisode4()">추리 제출하기</button></div>
+    </div>
+  </section>
+
+  <section id="screen-ep4-result" class="screen ep2-screen ep4-screen">
+    <div class="eyebrow">CASE SOLVED</div><h2>별빛 수정 사건 해결!</h2>
+    <div class="panel ep2-result-content"><h3>✨ 진실이 밝혀졌습니다</h3><p>범인은 파루였습니다. 파루는 별빛 수정의 빛이 점점 약해지고 있다는 사실을 알아차렸고, 자신의 세공 기술로 고칠 수 있다고 생각했습니다. 하지만 마을 사람들이 믿어 주지 않자 축제 전에 몰래 수정을 가져가 작업실에서 복구한 뒤 돌려놓으려 했습니다.</p><p>파루는 회관의 좁은 뒤편 창문으로 드나들었습니다. 난쟁이가 한 명 겨우 통과할 수 있는 창문이었고, 수정도 한 팔로 안을 수 있었기에 가능한 경로였습니다. 문과 자물쇠에는 강제로 부순 흔적이 없었습니다. 파루는 수정을 천으로 감싸 작업실로 옮겼습니다.</p><p>받침대의 긁힌 자국은 세공 도구와 비슷했지만 오래된 흠집도 있어 그것만으로 범인을 단정할 수는 없습니다. 푸른 연마 가루가 창문에서 받침대까지 이어진 점, 파루의 작업 도구와 수정 점검 역할, 모스의 증언에서 확인된 천으로 감싼 물체가 작업실 쪽으로 향한 정황을 함께 보면 파루의 행동이 가장 잘 설명됩니다. 루비의 밀랍과 모스의 은빛 실은 각각 다른 의심을 만들었지만, 단독으로는 범행을 입증하지 못했습니다.</p><p>파루는 수정을 복구해 축제 전에 돌려놓을 생각이었지만, 마을에 알리지 않고 보물을 가져간 잘못은 사라지지 않습니다. 이제 별빛 수정의 빛은 다시 숲길을 비출 수 있게 되었습니다.</p></div>
+    <div class="row wrap ep2-actions"><button class="btn btn-primary" onclick="go('ep4-gratitude')">촌장의 감사 편지 확인하기</button><button class="btn btn-secondary" onclick="go('ep4-table')">단서 다시 보기</button></div>
+  </section>
+
+  <section id="screen-ep4-gratitude" class="screen ep2-screen ep4-screen">
+    <div class="eyebrow">A LETTER OF GRATITUDE</div><h2>난쟁이 마을 촌장의 편지</h2>
+    <div class="letter ep2-letter"><div class="letter-title">✉ 감사의 편지 ✉</div>
+      <p><strong>수신인:</strong> <span class="player-name"></span> 탐정님</p><p><strong>발신인:</strong> 난쟁이 마을 촌장</p>
+      <hr style="border:0;border-top:1px solid #ddcba6;margin:20px 0">
+      <p>별빛 수정이 무사히 돌아오고, 파루가 품었던 걱정도 알게 되어 다행입니다. 마을 사람들의 말을 차분히 살피고 진실을 밝혀 주셔서 고맙습니다. 감사의 마음을 담아 작은 선물을 보냅니다. 축제의 밤에는 숲길을 비추는 수정의 빛을 함께 바라봐 주세요.</p>
+      <div class="letter-actions"><button class="btn btn-primary" onclick="claimEpisode4Reward()">확인 · 츄르 받기</button></div>
+    </div>
+    <div class="panel" style="max-width:690px;margin:0 auto;width:100%;text-align:center"><strong>감사의 답례</strong><p class="hint" style="margin:6px 0 0">츄르 1개를 받고 사건 선택으로 돌아갑니다.</p></div>
+  </section>
+
+  <section id="screen-letter" class="screen">
+    <div class="eyebrow">INCOMING LETTER</div>
+    <h2>수사 의뢰서</h2>
+    <div class="letter">
+      <div class="letter-title">✉ 수사 의뢰서 ✉</div>
+      <p><strong>수신인 :</strong> <span class="player-name"></span> 탐정님</p>
+      <p><strong>발신인 :</strong> 아델린 (저택 주인)</p>
+      <hr style="border:0;border-top:1px solid #ddcba6;margin:20px 0">
+      <p>안녕하세요, 탐정님.
+
+저희 저택에서 대대로 내려오던 은방울꽃 브로치가 사라졌습니다. 어젯밤 손님들에게 보여드리려고 서재의 장식장에 넣어 두었는데, 잠시 자리를 비운 사이 감쪽같이 사라졌어요.
+
+장식장에는 부서진 흔적이 없고 창문도 잠겨 있었습니다. 그 시간에 저택에 있던 사람은 저를 포함해 네 명뿐입니다.
+
+돌아가신 어머니께서 물려주신 소중한 유품입니다. 부디 누가, 어떻게 브로치를 가져갔는지 밝혀주세요.
+
+부탁드립니다, 탐정님.</p>
+      <p style="text-align:right;margin-top:28px">의뢰인 아델린 드림</p>
+    </div>
+    <div class="letter-actions"><button class="btn btn-primary" onclick="beginInvestigation()">편지 확인하기</button></div>
+  </section>
+
+  <section id="screen-scene" class="screen">
+    <div class="row between wrap">
+      <div><div class="eyebrow">SCENE INVESTIGATION</div><h2>저택의 서재</h2></div>
+      <button class="btn btn-gold btn-small" onclick="go('table')">수사 테이블 →</button>
+    </div>
+    <p class="subtitle" style="margin-bottom:10px">기본 조사 횟수는 전체 단서 12개에서 2개를 뺀 10회입니다. 발견한 단서는 언제든 다시 확인할 수 있습니다.</p>
+    <div class="statusbar">
+      <div class="stat">🧭 남은 조사 <b id="tokens-left">10</b>/10</div>
+      <div class="stat">📜 발견 단서 <b id="clues-found">0</b>/12</div>
+      <div class="stat">🐾 츄르 <b id="scene-badges">0</b></div>
+    </div>
+    <div class="scene-layout">
+      <div>
+        <div class="scene-art" role="img" aria-label="저택 서재 현장 이미지">
+          
+          <button class="hotspot hs1" data-clue="0" onclick="investigate(0)" title="장식장">1</button>
+          <button class="hotspot hs2" data-clue="1" onclick="investigate(1)" title="서재 시계">2</button>
+          <button class="hotspot hs3" data-clue="2" onclick="investigate(2)" title="창문">3</button>
+          <button class="hotspot hs4" data-clue="3" onclick="investigate(3)" title="업무 수첩">4</button>
+          <button class="hotspot hs5" data-clue="4" onclick="investigate(4)" title="장갑 섬유">5</button>
+          <button class="hotspot hs6" data-clue="5" onclick="investigate(5)" title="악보">6</button>
+          <button class="hotspot hs7" data-clue="6" onclick="investigate(6)" title="배달 전표">7</button>
+          <button class="hotspot hs8" data-clue="7" onclick="investigate(7)" title="열쇠함">8</button>
+          <button class="hotspot hs9" data-clue="8" onclick="investigate(8)" title="서비스 통로">9</button>
+        </div>
+        <p class="scene-note">현장 이미지 위 번호를 눌러 단서를 조사하세요.</p>
+      </div>
+      <div class="ep2-legend"><h3>현장 조사 지점</h3><p><b>1.</b> 장식장 · <b>2.</b> 서재 시계</p><p><b>3.</b> 잠긴 창문 · <b>4.</b> 업무 수첩</p><p><b>5–9.</b> 주변 흔적과 물건</p><p class="hint">기본 조사 10회 · 전체 단서 12개</p><button class="btn btn-secondary" onclick="showClientInfoEp1()">의뢰인이 준 정보</button><button class="btn btn-primary" onclick="go('suspects')">용의자 조사 →</button></div>
+    </div>
+  </section>
+
+    <section id="screen-suspects" class="screen">
+    <div class="row between wrap"><div><div class="eyebrow">SUSPECT INTERVIEWS</div><h2>용의자 조사</h2></div><button class="btn btn-gold btn-small" onclick="go('table')">수사 테이블 →</button></div>
+    <p class="subtitle">알리바이는 기본 정보로 언제든 확인할 수 있습니다. 타인에 대한 증언을 조사하면 조사 횟수가 소모됩니다.</p>
+    <div class="statusbar"><div class="stat">🧭 남은 조사 <b id="suspect-tokens-left">10</b></div><div class="stat">📜 발견 단서 <b id="suspect-clues-found">0</b>/12</div></div>
+    <div class="ep2-suspect-grid">
+      <article class="panel ep2-suspect"><div class="ep2-avatar">🎹</div><h3>클라라</h3><p class="hint">의뢰인의 조카</p><button class="btn btn-secondary" onclick="showEp1Alibi('clara')">알리바이</button><button class="btn btn-secondary" onclick="investigate(9,true)">타인에 대한 증언</button></article>
+      <article class="panel ep2-suspect"><div class="ep2-avatar">🧤</div><h3>에드윈</h3><p class="hint">저택 관리인</p><button class="btn btn-secondary" onclick="showEp1Alibi('edwin')">알리바이</button><button class="btn btn-secondary" onclick="investigate(10,true)">타인에 대한 증언</button></article>
+      <article class="panel ep2-suspect"><div class="ep2-avatar">💎</div><h3>펠릭스</h3><p class="hint">골동품 감정사</p><button class="btn btn-secondary" onclick="showEp1Alibi('felix')">알리바이</button><button class="btn btn-secondary" onclick="investigate(11,true)">타인에 대한 증언</button></article>
+    </div>
+    <div class="row wrap ep2-actions"><button class="btn btn-primary" onclick="go('scene')">현장으로 돌아가기</button><button class="btn btn-secondary" onclick="go('table')">수사 테이블 열기</button></div>
+  </section>
+
+  <section id="screen-clue" class="screen">
+    <div class="eyebrow">EVIDENCE FOUND</div>
+    <h2 id="clue-title">단서</h2>
+    <div class="panel stack">
+      <div class="row"><div class="avatar">🔍</div><div class="grow"><div class="tag" id="clue-category">현장 증거</div><p id="clue-desc" style="margin:10px 0 0;white-space:pre-line"></p></div></div>
+      <div class="panel" style="background:#f4ead9;box-shadow:none">
+        <strong>탐정의 메모</strong>
+        <p id="clue-note" class="hint" style="margin:7px 0 0"></p>
+      </div>
+      <div class="row between wrap">
+        <button class="btn btn-secondary" onclick="go('scene')">현장으로 돌아가기</button>
+        <button class="btn btn-primary" onclick="go('table')">수사 테이블</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="screen-table" class="screen">
+    <div class="row between wrap">
+      <div><div class="eyebrow">DEDUCTION DESK</div><h2>수사 테이블</h2></div>
+      <div class="stat">🔎 남은 조사 <b id="table-tokens">6</b></div>
+    </div>
+    <p class="subtitle">단서끼리 연결하고, 증거가 뒷받침하는 범위 안에서 가설을 세우세요. 현장으로 돌아가 추가 조사를 할 수 있습니다.</p>
+    <div class="two-col">
+      <div class="panel stack">
+        <h3>수집한 단서</h3>
+        <div id="table-clues" class="ep2-evidence-list"><div class="hint">아직 수집한 단서가 없습니다.</div></div>
+        <button class="btn btn-secondary" onclick="go('scene')">← 현장 조사</button>
+        
+      </div>
+      <div class="panel stack">
+        <h3>용의자 메모</h3>
+        <div class="evidence-chip"><span>🐈‍⬛</span><div><strong>에드윈 · 관리인</strong><div class="hint">열쇠를 관리한다. 사건 당시 창고에 있었다고 주장한다.</div></div></div>
+        <div class="evidence-chip"><span>🐈</span><div><strong>클라라 · 의뢰인의 조카</strong><div class="hint">사건 시간대에 피아노를 연주했다고 진술한다.</div></div></div>
+        <div class="evidence-chip"><span>🐈</span><div><strong>펠릭스 · 골동품 감정사</strong><div class="hint">브로치의 가치를 알고 있으며 장식장 구조를 안다.</div></div></div>
+        <div class="panel" style="background:#f4ead9;box-shadow:none">
+          <strong>수사 종결</strong>
+          <p class="hint" style="margin:6px 0 12px">언제든 결론을 제출할 수 있습니다. 단, 오답이 누적되면 사건이 미제로 남을 수 있습니다.</p>
+          <button class="btn btn-primary" style="width:100%" onclick="go('accuse')">사건 종결 및 답변 제출</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="screen-accuse" class="screen">
+    <div class="eyebrow">FINAL DEDUCTION</div>
+    <h2>사건을 종결하시겠습니까?</h2>
+    <p class="subtitle">범인을 선택하고, 핵심 증거를 연결해 사건의 전말을 설명하세요.</p>
+    <div class="panel stack">
+      <label class="field-label" for="accused">1. 범인은 누구입니까?</label>
+      <select id="accused">
+        <option value="">용의자 선택</option><option value="edwin">에드윈 — 저택 관리인</option><option value="clara">클라라 — 의뢰인의 조카</option><option value="felix">펠릭스 — 골동품 감정사</option>
+      </select>
+      <label class="field-label" for="proof">2. 가장 중요한 근거는 무엇입니까?</label>
+      <select id="proof">
+        <option value="">근거 선택</option>
+        <option value="motive">브로치에 대한 이해관계가 있었다.</option>
+        <option value="contradiction">시간 기록과 진술이 모순되고, 현장 흔적도 연결된다.</option>
+        <option value="access">장식장 열쇠에 접근할 수 있었다.</option>
+        <option value="all">여러 증거를 함께 검토해 다른 가설을 배제했다.</option>
+      </select>
+      <label class="field-label" for="explanation">3. 발견한 증거를 연결해 사건의 전말을 설명하세요.</label>
+      <textarea id="explanation" placeholder="예: 시계 수리 기록은 ... 을 보여준다. 에드윈의 진술은 ... 와 모순되며 ... 단서까지 고려하면 ..."></textarea>
+      <div class="hint">프로토타입 판정은 객관식 선택과 주관식의 핵심 논리 단어를 함께 확인합니다. 추후 더 정교한 답변 평가 방식으로 바꿀 수 있어요.</div>
+      <div id="accuse-error" class="error"></div>
+      <button class="btn btn-primary" onclick="submitAccusation()">추리 제출하기</button>
+      <button class="btn btn-quiet" onclick="go('table')">추리 더 하기</button>
+    </div>
+  </section>
+
+  <section id="screen-wrong" class="screen">
+    <div class="eyebrow">DEDUCTION FAILED</div>
+    <div class="hero-cat" style="font-size:65px;text-align:center">😿</div>
+    <h2 style="text-align:center">도대체 어디서부터 잘못된 거지?</h2>
+    <p id="wrong-message" class="quote" style="text-align:center;max-width:600px;margin:0 auto 22px">생각해보니 논리적으로 맞지 않는 것 같아...</p>
+    <div class="panel stack">
+      <div class="row between"><span>누적 오답</span><strong id="wrong-count">1 / 2</strong></div>
+      <div class="hint" id="wrong-hint">증거가 뒷받침하는 범위를 다시 살펴보자.</div>
+      <button class="btn btn-primary" id="wrong-continue" onclick="go('table')">단서와 추리 다시 살펴보기</button>
+      <button class="btn btn-gold" id="wrong-badge" onclick="buyExtraAnswer()">츄르 1개로 추가 답변 기회</button>
+      <button class="btn btn-quiet" onclick="go('title')">메인 메뉴</button>
+    </div>
+  </section>
+
+  <section id="screen-failure" class="screen">
+    <div class="eyebrow">CASE CLOSED · UNSOLVED</div>
+    <div class="hero-cat" style="font-size:68px;text-align:center">🌧️🐈‍⬛</div>
+    <h2 style="text-align:center">미제사건으로 남았습니다.</h2>
+    <p class="subtitle" style="text-align:center;margin-left:auto;margin-right:auto">아직 진실에 닿지 못했지만, 모든 사건이 끝난 것은 아닙니다. 사건 기록을 돌아보고 다음 수사에서 더 날카로운 추리를 해보세요.</p>
+    <div class="panel stack">
+      <button class="btn btn-gold" id="failure-badge" onclick="buyExtraAnswer()">츄르 1개로 한 번 더 답변하기</button>
+      <button class="btn btn-secondary" onclick="revealSolution()">사건 기록 확인하기</button>
+      <button class="btn btn-primary" onclick="go('title')">메인 메뉴로</button>
+    </div>
+  </section>
+
+  <section id="screen-solution" class="screen">
+    <div class="eyebrow">CASE ARCHIVE</div><h2>사건 기록</h2>
+    <div class="panel stack">
+      <h3>사라진 은방울꽃 브로치 — 진상 보고서</h3>
+      <p>범인은 에드윈입니다. 그는 장식장 열쇠에 접근할 수 있었고, 브로치를 가져갈 기회가 있었습니다. 서재 시계의 오차와 배달원의 증언을 대조하면 시간 관련 진술을 검토할 수 있으며, 업무 수첩과 현장 흔적은 그의 알리바이에 의문을 제기합니다.</p>
+      <p>이 프로토타입은 핵심적인 추리 흐름을 시연하기 위한 버전입니다. 실제 정식판에서는 브로치의 이동 경로와 보관 장소를 입증하는 추가 단서를 배치해 최종 결론을 더 엄밀하게 만들 예정입니다.</p>
+      <button class="btn btn-primary" onclick="go('title')">메인 메뉴</button>
+    </div>
+  </section>
+
+  <section id="screen-success-letter" class="screen">
+    <div class="eyebrow">A LETTER OF GRATITUDE</div><h2>의뢰인에게 편지가 도착했습니다.</h2>
+    <div class="letter">
+      <div class="letter-title">✉ 감사의 편지 ✉</div>
+      <p><strong>수신인 :</strong> <span class="player-name"></span> 탐정님</p>
+      <p><strong>발신인 :</strong> 아델린</p>
+      <hr style="border:0;border-top:1px solid #ddcba6;margin:20px 0">
+      <p><span class="player-name"></span>님, 정말 감사합니다.
+
+덕분에 소중한 어머니의 브로치를 되찾고, 저택에 얽힌 수상한 일을 해결할 수 있었습니다.
+
+작은 감사의 표시를 준비했어요. 고양이 탐정님께 잘 어울릴 선물이기를 바랍니다.
+
+진심을 담아,
+아델린 드림</p>
+      <div class="letter-actions"><button class="btn btn-primary" onclick="showReward()">편지 확인하기</button></div>
+    </div>
+  </section>
+
+  <section id="screen-reward" class="screen">
+    <div class="eyebrow">CASE CLEARED</div><h2 style="text-align:center">감사의 선물</h2>
+    <div class="panel stack" style="max-width:520px;margin:10px auto;width:100%;text-align:center">
+      <div class="reward-icon" id="reward-icon">🐟</div>
+      <h3 id="reward-name">참치맛 츄르</h3>
+      <p id="reward-desc" class="subtitle" style="margin:0 auto">탐정님을 위한 특별한 간식!</p>
+      <div class="tag" style="align-self:center">츄르 +1</div>
+      <button class="btn btn-gold" onclick="claimReward()">선물 받기</button>
+    </div>
+  </section>
+
+  <section id="screen-completed" class="screen">
+    <div class="eyebrow">CLOSED CASES</div><h2>종결된 수사</h2>
+    <p class="subtitle">해결한 사건의 기록을 다시 살펴볼 수 있습니다.</p>
+    <div id="completed-list" class="stack"></div>
+    <button class="btn btn-quiet" style="margin-top:16px;align-self:flex-start" onclick="go('title')">메인 메뉴</button>
+  </section>
+
+  <section id="screen-load" class="screen">
+    <div class="eyebrow">CONTINUE INVESTIGATION</div><h2>불러오기</h2>
+    <div id="save-summary" class="panel stack"></div>
+    <button class="btn btn-quiet" style="margin-top:16px;align-self:flex-start" onclick="go('title')">메인 메뉴</button>
+  </section>
+
+  <div class="footer">프로토타입 · 진행 상황은 이 브라우저에 저장됩니다.</div>
+</div>
+</div>
+<div id="toast" class="toast"></div>
+<div id="modal-backdrop" class="modal-backdrop"><div class="modal"><h3 id="modal-title">안내</h3><p id="modal-text"></p><div id="modal-info-sections"></div><div id="modal-note" class="modal-note" style="display:none"><strong>탐정 메모</strong><p id="modal-note-text"></p></div><div class="row" style="justify-content:flex-end"><button id="modal-cancel" class="btn btn-secondary" style="display:none" onclick="cancelInvestigationPurchase()">취소</button><button id="modal-confirm" class="btn btn-primary" onclick="closeModal()">확인</button></div></div></div>
+<script>
+const CLUES = [
+ {name:"비어 있는 장식장",category:"현장 증거",desc:"장식장 문은 파손되지 않았고, 벨벳 받침에는 브로치가 놓여 있던 자국이 남아 있다."},
+ {name:"서재의 탁상시계",category:"시간 증거",desc:"서재 시계는 복도 시계보다 12분 늦게 가고 있다. 시계 뒷면에는 최근 수리한 흔적이 보인다.",note:"시계가 가리키는 시각을 실제 시각으로 그대로 믿으면 안 된다. 시계 수리 기록이나 외부 시간 기준이 필요하다."},
+ {name:"잠긴 창문",category:"현장 증거",desc:"창문 잠금장치는 안쪽에 걸려 있고, 창틀에는 빗물이 들어온 흔적이 없다.",note:"창문을 통한 접근을 뒷받침하는 증거는 없다. 하지만 잠긴 창문만으로 모든 외부 접근 가능성을 완전히 배제할 수는 없다."},
+ {name:"에드윈의 업무 수첩",category:"진술 검증",desc:"업무 수첩에는 '오후 8시 20분 — 배달 수령. 피아노 연주가 계속되고 있었음'이라고 적혀 있다."},
+ {name:"초록색 섬유 조각",category:"물리적 증거",desc:"장식장 잠금장치 틈에서 초록색 섬유가 발견됐다. 에드윈의 작업용 장갑에는 최근 찢어진 부분이 있다."},
+ {name:"클라라의 악보",category:"진술",desc:"클라라는 오후 8시 10분부터 8시 30분까지 피아노를 연주했다고 진술했다. 다른 사람도 연주를 들었다고 한다.",note:"목격자들의 진술과 에드윈의 업무 수첩을 비교해 보자. 연주를 들었다는 사실이 각 인물의 위치까지 완전히 증명하는지는 별도로 판단해야 한다."},
+ {name:"배달 전표와 배달원의 증언",category:"독립적인 시간 증거",desc:"배달원은 본인의 회중시계를 확인한 뒤 오후 8시 30분에 배달을 완료했다고 진술한다."},
+ {name:"열쇠함의 기록표",category:"접근 기회",desc:"장식장 열쇠는 평소 에드윈이 관리한다. 열쇠함 기록표의 마지막 기록은 오후 7시 50분이며, 이후 기록은 비어 있다.",note:"기록이 없다는 사실은 열쇠가 사용되지 않았다는 뜻이 아니다. 에드윈 외에 열쇠함에 접근할 수 있었던 사람이 있는지도 확인해야 한다."},
+ {name:"서비스 통로의 흔적",category:"현장 흔적",desc:"창고와 서재 사이의 통로 먼지에 최근 이동 흔적이 있다. 흔적의 폭과 무늬는 남성용 신발과 비슷하다."},
+ {name:"클라라가 전한 초록 장갑 유행",category:"클라라 · 타인에 대한 증언",desc:"요즘 수도에는 초록색 장갑이 유행이에요. 에드윈 집사도 펠릭스 씨도 같은 장갑을 착용하고 있었거든요.",note:"장갑 섬유가 발견된 사실과 함께 검토하자. 이 증언은 두 사람 모두에게 접근 기회가 있었을 수 있음을 보여준다."},
+ {name:"에드윈이 기억하는 피아노 연주",category:"에드윈 · 타인에 대한 증언",desc:"클라라 양이 8시 30분까지 피아노를 연주했다고 했습니까? 저는 그 이전에 끝났던 걸로 기억하는데 이상하군요.",note:"에드윈의 업무 수첩, 배달원의 시각, 클라라의 진술을 서로 비교해 시간의 모순을 확인하자."},
+ {name:"펠릭스가 말한 비밀 통로",category:"펠릭스 · 타인에 대한 증언",desc:"저는 브로치 감정만 했기 때문에 아는 게 별로 없지만, 비밀 통로가 있다는 건 이 저택을 잘 알고 있는 사람이라는 거 아닐까요?",note:"비밀 통로를 아는 사람의 범위를 좁혀 주는 증언이다. 현장에서 발견한 통로 흔적과 다른 사람들의 진술을 함께 검토하자."}
+];
+const state = {
+ nickname:"", churuCount:0, ep2RewardClaimed:false, tokens:6, found:[], wrongs:0, extraAnswerAvailable:false,
+ episodeStarted:false, pendingReward:false, rewardClaimed:false, completed:[], activeScreen:"title",
+ extraInvestigations:0, caseStatus:"", ep2Found:[], ep2Status:"", ep2WrongAttempts:0, ep2Tokens:5, ep3Found:[], ep3Status:"", ep3Tokens:6, ep3RewardClaimed:false, ep4Found:[], ep4Status:"", ep4Tokens:12, ep4RewardClaimed:false
+};
+const SAVE_KEY="catDetectiveMysterySave_v1";
+let currentClue=0;
+function save(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(state));}catch(e){} updateUI();}
+function restore(){try{const s=JSON.parse(localStorage.getItem(SAVE_KEY)||"null");if(s)Object.assign(state,s);}catch(e){}}
+function go(name){
+ document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+ const target=document.getElementById("screen-"+name); if(target)target.classList.add("active");
+ state.activeScreen=name;
+ document.getElementById("top-status").textContent=({title:"탐정 사무소",nickname:"탐정 등록",episodes:"사건 선택",letter:"수사 의뢰",scene:"현장 조사",suspects:"용의자 조사",clue:"단서 기록",table:"추리 진행",accuse:"사건 종결",wrong:"추리 재검토",failure:"미제사건",solution:"사건 기록", "success-letter":"감사의 편지",reward:"수사 보상",completed:"종결된 수사",load:"불러오기", "ep2-letter":"2화 의뢰서", "ep2-scene":"2화 현장 조사", "ep2-suspects":"2화 용의자 조사", "ep2-table":"2화 수사 테이블", "ep2-accuse":"2화 최종 추리", "ep2-result":"2화 사건 기록", "ep2-gratitude":"감사 편지", "ep3-letter":"3화 의뢰서", "ep3-scene":"3화 현장 조사", "ep3-suspects":"3화 주변 인물 조사", "ep3-table":"3화 수사 테이블", "ep3-accuse":"3화 최종 추리", "ep3-result":"3화 사건 기록", "ep3-gratitude":"집사의 편지", "ep4-letter":"4화 의뢰서", "ep4-scene":"4화 현장 조사", "ep4-suspects":"4화 용의자 조사", "ep4-table":"4화 수사 테이블", "ep4-accuse":"4화 최종 추리", "ep4-result":"4화 사건 기록", "ep4-gratitude":"감사 편지"})[name]||"수사 중";
+ if(name.startsWith("ep2-"))renderEpisode2Lists();if(name.startsWith("ep3-"))renderEpisode3Lists();if(name.startsWith("ep4-"))renderEpisode4Lists();
+ save();
+}
+function updateUI(){
+ document.querySelectorAll(".player-name").forEach(e=>e.textContent=state.nickname||"탐정");
+ const churuCount=document.getElementById("churu-count");if(churuCount)churuCount.textContent=state.churuCount||0;
+ ["scene-badges"].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=state.churuCount;});
+ ["tokens-left","table-tokens","suspect-tokens-left"].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=state.tokens;});
+ ["clues-found","clue-mini-count","suspect-clues-found"].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=state.found.length+(id==="clue-mini-count"?"개":"");});
+ document.querySelectorAll(".hotspot").forEach(b=>{const n=Number(b.dataset.clue);b.classList.toggle("found",state.found.includes(n));b.classList.toggle("locked",state.tokens<=0&&!state.found.includes(n));});
+ renderClueLists();
+ ["ep2-badges-scene","ep2-badges-suspects"].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=state.churuCount;});
+ const wb=document.getElementById("wrong-badge"); if(wb){wb.disabled=state.churuCount<1;wb.textContent=state.churuCount<1?"츄르가 부족합니다":"츄르 1개로 추가 답변 기회";}
+ const fb=document.getElementById("failure-badge"); if(fb){fb.disabled=state.churuCount<1;fb.textContent=state.churuCount<1?"츄르가 부족합니다":"츄르 1개로 한 번 더 답변하기";}
+ document.getElementById("title-greeting").textContent=state.nickname?`${state.nickname} 탐정님, 오늘은 어떤 사건을 해결할까요?`:"첫 수사를 시작하려면 먼저 탐정 등록을 해주세요.";
+}
+function renderClueLists(){
+ const html=state.found.length?state.found.map((n)=>`<button class="ep2-evidence-card" onclick="reopenClue(${n})"><strong>${n+1}. ${CLUES[n].name}</strong><small>${CLUES[n].category}</small></button>`).join(""):'<div class="hint">아직 발견한 단서가 없습니다.</div>';
+ const a=document.getElementById("clue-list"),b=document.getElementById("table-clues");if(a)a.innerHTML=html;if(b)b.innerHTML=html;
+}
+function startNew(){if(!state.nickname){go("nickname");return;}go("episodes");}
+function saveNickname(){
+ const input=document.getElementById("nickname"),name=input.value.trim(),err=document.getElementById("nickname-error");
+ const ko=(name.match(/[가-힣]/g)||[]).length,en=(name.match(/[A-Za-z]/g)||[]).length;
+ if(!name){err.textContent="닉네임을 입력해주세요.";return;}
+ if(ko>12||en>=12){err.textContent="한글은 최대 12자, 영어는 12자 미만으로 설정해주세요.";return;}
+ if(!/^[가-힣A-Za-z0-9_ ]+$/.test(name)){err.textContent="한글, 영문, 숫자, 밑줄, 공백만 사용할 수 있어요.";return;}
+ state.nickname=name;
+ // 첫 사건 튜토리얼용 뱃지 지급
+ if(!state._starterBadgeGiven){state.churuCount+=1;state._starterBadgeGiven=true;}
+ save();go("episodes");
+}
+function openLetter(){
+ if(!state.nickname){go("nickname");return;}
+ if(state.episodeStarted && state.caseStatus==="active"){go("scene");return;}
+ state.tokens=10;state.found=[];state.wrongs=0;state.extraAnswerAvailable=false;state.extraInvestigations=0;
+ state.episodeStarted=true;state.pendingReward=false;state.rewardClaimed=false;state.caseStatus="active";
+ document.getElementById("accused").value="";document.getElementById("proof").value="";document.getElementById("explanation").value="";
+ save();go("letter");
+}
+function beginInvestigation(){go("scene");}
+let pendingInvestigationPurchase=null;
+function showInvestigationPurchaseConfirm(episode,id,asModal=false){showModal('추가 조사 확인','츄르 1개가 사용됩니다. 단서를 확인하겠습니까?');pendingInvestigationPurchase={episode,id,asModal};const cancel=document.getElementById('modal-cancel'),confirm=document.getElementById('modal-confirm');cancel.style.display='inline-flex';cancel.onclick=cancelInvestigationPurchase;confirm.textContent='확인';confirm.onclick=confirmInvestigationPurchase;}
+function cancelInvestigationPurchase(){pendingInvestigationPurchase=null;closeModal();}
+function confirmInvestigationPurchase(){const pending=pendingInvestigationPurchase;pendingInvestigationPurchase=null;closeModal();if(!pending)return;if(state.churuCount<1){showModal('츄르가 부족합니다','추가 조사를 하려면 츄르 1개가 필요합니다.');return;}state.churuCount--;if(pending.episode==='ep1'){state.tokens=Math.max(1,state.tokens);save();investigate(pending.id,pending.asModal);}else if(pending.episode==='ep2'){state.ep2Tokens=Math.max(1,state.ep2Tokens);save();inspectEp2(pending.id);}else if(pending.episode==='ep3'){state.ep3Tokens=Math.max(1,state.ep3Tokens);save();inspectEp3(pending.id);}else{state.ep4Tokens=Math.max(1,state.ep4Tokens);save();inspectEp4(pending.id);}}
+function showEp1ClueModal(n){const clue=CLUES[n];showClueModal(clue.name,clue.desc,clue.note);}
+function investigate(n,asModal=true){if(state.found.includes(n)){currentClue=n;if(asModal)showEp1ClueModal(n);else{showClue(n);go('clue');}return;}if(state.tokens<=0){showInvestigationPurchaseConfirm('ep1',n,asModal);return;}state.tokens--;state.found.push(n);currentClue=n;save();if(asModal)showEp1ClueModal(n);else{showClue(n);go('clue');}}
+function reopenClue(n){currentClue=n;const clue=CLUES[n];showClueModal(clue.name,clue.desc,clue.note);}
+function showClue(n){document.getElementById("clue-title").textContent=CLUES[n].name;document.getElementById("clue-category").textContent=CLUES[n].category;document.getElementById("clue-desc").textContent=CLUES[n].desc;document.getElementById("clue-note").textContent=CLUES[n].note;}
+function submitAccusation(){
+ const accused=document.getElementById("accused").value,proof=document.getElementById("proof").value,ex=document.getElementById("explanation").value.trim(),err=document.getElementById("accuse-error");
+ if(!accused||!proof||!ex){err.textContent="세 항목을 모두 작성한 뒤 제출해주세요.";return;}
+ // Lightweight prototype grading: correct culprit + defensible evidence + explanation containing at least two reasoning cues.
+ const lower=ex.toLowerCase();
+ const cues=["시계","시간","수첩","기록","진술","모순","섬유","장갑","통로","열쇠","증거","배달","알리바이","브로치","연주","흔적"];
+ const cueCount=cues.filter(w=>lower.includes(w)).length;
+ const logicalCue=/(때문|따라서|그러므로|하지만|반면|모순|일치|충돌|연결|근거|확인|비교|검토|증명|뒷받침|의심)/.test(ex);
+ const good=accused==="edwin" && (proof==="contradiction"||proof==="all") && cueCount>=2 && logicalCue;
+ if(good){resolveCase();return;}
+ state.wrongs++;
+ document.getElementById("wrong-count").textContent=`${state.wrongs} / 2`;
+ const lines=["생각해보니 논리적으로 맞지 않는 것 같아…","도대체 어디서부터 잘못된 거지? 단서가 가리키는 사실부터 다시 확인해 보자.","증거를 충분히 연결하지 못했어. 의심과 입증은 다르다는 걸 잊지 말자."];
+ document.getElementById("wrong-message").textContent=lines[Math.min(state.wrongs-1,lines.length-1)];
+ if(state.wrongs>=2){
+   state.caseStatus="unsolved";
+   document.getElementById("wrong-hint").textContent="두 번 오답을 제출했습니다. 츄르를 사용해 추가 답변 기회를 얻거나 사건 기록을 확인할 수 있습니다.";
+   document.getElementById("wrong-continue").textContent="사건 기록 확인하기";
+   document.getElementById("wrong-continue").onclick=()=>go("failure");
+ } else {
+   document.getElementById("wrong-hint").textContent="첫 번째 오답입니다. 단서를 다시 살펴보거나, 준비가 되었다면 다시 답변할 수 있습니다.";
+   document.getElementById("wrong-continue").textContent="단서와 추리 다시 살펴보기";
+   document.getElementById("wrong-continue").onclick=()=>go("table");
+ }
+ save();go("wrong");
+}
+function buyExtraAnswer(){
+ if(state.churuCount<1){showModal("츄르가 부족합니다","츄르가 있으면 추가 답변 기회를 얻을 수 있습니다.");return;}
+ state.churuCount--;state.extraAnswerAvailable=true;
+ // Keep the accumulated error count, but grant one extra attempt.
+ if(state.caseStatus==="unsolved")state.caseStatus="active";
+ state.wrongs=Math.max(1,state.wrongs);
+ save();toast("츄르 1개를 사용했습니다. 추가 답변 기회가 주어졌습니다.");
+ go("accuse");
+}
+function resolveCase(){
+ state.caseStatus="solved";state.pendingReward=true;
+ if(!state.completed.includes("lily-brooch"))state.completed.push("lily-brooch");
+ save();go("success-letter");
+}
+function showReward(){
+ document.getElementById("reward-icon").textContent="🐟";document.getElementById("reward-name").textContent="참치맛 츄르";document.getElementById("reward-desc").textContent="탐정님을 위한 특별한 참치맛 츄르예요.";
+ go("reward");
+}
+function claimReward(){
+ if(state.pendingReward&&!state.rewardClaimed){state.churuCount+=1;state.rewardClaimed=true;state.pendingReward=false;save();}
+ toast("선물을 받았습니다! 츄르 1개를 획득했어요.");go("episodes");
+}
+function showCompleted(){
+ const list=document.getElementById("completed-list");
+ let html="";
+ if(state.completed.includes("lily-brooch"))html+='<div class="panel episode-card"><div class="episode-art">💎</div><div><span class="tag">해결 완료</span><h3>사라진 은방울꽃 브로치</h3><p class="hint">범인: 에드윈 · 수사 종결</p><button class="btn btn-secondary" onclick="revealSolution()">사건 기록 보기</button></div></div>';
+ if(state.completed.includes("red-feast"))html+=`<div class="panel episode-card"><div class="episode-art">🥀</div><div><span class="tag">해결 완료</span><h3>맹세와 붉은 연회</h3><p class="hint">루시안의 독살과 베르트의 밀실 조작을 밝혀냄</p><button class="btn btn-secondary" onclick="go('ep2-result')">사건 기록 보기</button></div></div>`;
+ if(state.completed.includes("premium-tuna"))html+=`<div class="panel episode-card"><div class="episode-art">🐟</div><div><span class="tag">해결 완료</span><h3>사라진 최고급 참치 캔의 행방</h3><p class="hint">범인: 집사 · 건강검진 전 금식을 위한 소동</p><button class="btn btn-secondary" onclick="go('ep3-result')">사건 기록 보기</button></div></div>`;
+ if(state.completed.includes("starlight-crystal"))html+=`<div class="panel episode-card"><div class="episode-art">💠</div><div><span class="tag">해결 완료</span><h3>별빛 수정의 행방</h3><p class="hint">범인: 파루 · 수정의 작업실 이동 경로와 복구 동기 확인</p><button class="btn btn-secondary" onclick="go('ep4-result')">사건 기록 보기</button></div></div>`;
+ if(!html)html='<div class="panel"><h3>아직 종결된 수사가 없습니다.</h3><p class="hint">첫 사건을 해결하면 이곳에 사건 기록이 쌓입니다.</p></div>';
+ list.innerHTML=html;go("completed");
+}
+function revealSolution(){go("solution");}
+function loadCase(){
+ if(!state.episodeStarted || !["active","unsolved"].includes(state.caseStatus)){showModal("불러올 수사가 없습니다","현재 진행 중인 에피소드가 없습니다. 새 수사에서 사건을 시작해 주세요.");return;}
+ if(state.caseStatus==="unsolved")go("failure");else go("scene");
+}
+function showClientInfoEp1(){showInfoSections('의뢰인이 준 정보',[{title:'감정 결과',items:['최근 은방울꽃 브로치의 감정을 맡겼는데, 꽤 높은 가치를 가졌다는 결과가 나왔습니다.']}]);}
+function showEp1Alibi(id){const alibis={clara:'저는 8시 30분까지 피아노 연주를 했어요.',edwin:'배달원이 오늘 방문 예정이었고, 저는 약속 시간에 맞춰 배달원과 함께 있었습니다.',felix:'은방울꽃 브로치는 제가 20년 간 감정가로 살아오면서 감정한 물품 중 정말 뛰어난 가치를 가지고 있어요. 저도 사람인지라 탐이나긴 했습니다만, 그렇게 몰상식한 인간이 아닙니다.'};showModal((id==='clara'?'클라라':id==='edwin'?'에드윈':'펠릭스')+'의 알리바이',alibis[id]||'');}
+
+function showClueModal(title,description,note){showModal(title,description);const box=document.getElementById('modal-note');if(note&&note.trim()){document.getElementById('modal-note-text').textContent=note;box.style.display='block';}}
+function showInfoSections(title,sections){showModal(title,'');const container=document.getElementById('modal-info-sections');sections.forEach(section=>{const box=document.createElement('section');box.className='modal-info-section';const heading=document.createElement('h4');heading.textContent=section.title;const list=document.createElement('ol');section.items.forEach(item=>{const li=document.createElement('li');li.textContent=item;list.appendChild(li);});box.append(heading,list);container.appendChild(box);});}
+
+function showModal(title,text){pendingInvestigationPurchase=null;const cancel=document.getElementById("modal-cancel"),confirm=document.getElementById("modal-confirm"),note=document.getElementById("modal-note"),sections=document.getElementById("modal-info-sections");if(cancel){cancel.style.display="none";cancel.onclick=cancelInvestigationPurchase;}if(confirm){confirm.textContent="확인";confirm.onclick=closeModal;}if(note)note.style.display="none";if(sections)sections.replaceChildren();document.getElementById("modal-title").textContent=title;document.getElementById("modal-text").textContent=text;document.getElementById("modal-backdrop").style.display="flex";}
+function closeModal(){document.getElementById("modal-backdrop").style.display="none";const cancel=document.getElementById("modal-cancel"),confirm=document.getElementById("modal-confirm");if(cancel)cancel.style.display="none";if(confirm){confirm.textContent="확인";confirm.onclick=closeModal;}pendingInvestigationPurchase=null;}
+let toastTimer;
+function toast(text){const el=document.getElementById("toast");el.textContent=text;el.style.display="block";clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.style.display="none",2400);}
+
+const EP2_CLUES = {
+ A1:{name:"영주의 시신",category:"현장 증거 · A-1",desc:"올렉의 가슴에는 마법을 무효화하는 성스러운 단검이 깊이 꽂혀 있다. 단검 주변의 피는 이미 굳어 있고, 입가에는 검붉은 피와 정체불명의 거품이 남아 있다."},
+ A2:{name:"깨진 와인 잔과 바닥",category:"현장 증거 · A-2",desc:"고급 용혈주가 쏟아져 있고, 바닥에서는 희미한 약초 냄새가 난다. 냄새를 맡으면 손끝이 살짝 저릴 정도의 마비감이 느껴진다."},
+ A3:{name:"책상 위 스크롤",category:"현장 증거 · A-3",desc:"스크롤은 마력이 소진되어 재처럼 부서지고 있다. 마법 전문가는 이것이 정확히 15분 뒤 효과가 발생하도록 설정된 지연 마법이라고 감정한다.",note:"22시에 들린 충돌음은 실제 사건 시각이 아니라 미리 설치된 스크롤의 효과일 수 있다."},
+ A4:{name:"책장 뒤 비밀 통로",category:"현장 증거 · A-4",desc:"책장 뒤에 3층 집무실에서 성 뒤편 하수도로 이어지는 비밀 통로가 있다. 통로 안쪽의 걸쇠는 잠겨 있지 않다."},
+ A5:{name:"찢어진 노트 조각",category:"현장 증거 · A-5",desc:"노트에는 이렇게 적혀 있다. “30년 전 나의 가문을 도륙한 것은 이전 영주가 아닌 바로 현 영주 올렉이었다. 내 손으로 가문의 복수를 완수하리라.”"},
+ E1:{name:"비어 있는 성물 보관함",category:"엘레나 · 소지품",desc:"성물 보관함은 비어 있고 잠금장치에는 열쇠가 들어갔다 나온 자국이 남아 있다. 보관함에는 원래 마법을 무효화하는 성스러운 단검이 보관되어 있었다."},
+ E2:{name:"손거울과 성물 보관 열쇠",category:"엘레나 · 소지품",desc:"엘레나는 손거울과 성물 보관함 열쇠를 가지고 있다. 거울은 환영 마법으로 바뀐 외형을 비추면 본래 모습을 드러내는 특수한 물건이다."},
+ E3:{name:"루시안에 대한 엘레나의 진술",category:"엘레나 · 진술",desc:"엘레나는 21시 10분에 집무실에서 당황한 채 나오는 이사벨라를 보았다. 21시 30분 복도에서 루시안과 마주쳤는데, 루시안은 평소 지니던 지팡이가 없었다. 거울에는 루시안의 본래 모습이 비쳤다.",note:"이 진술은 루시안의 환영 마법 가능성을 낮추지만, 그가 다른 시각에 집무실에 갔는지까지 증명하지는 않는다."},
+ L1:{name:"드래곤 브레스 빈 병",category:"루시안 · 소지품",desc:"빈 병 라벨에는 “드래곤 브레스 — 복용 30분 후 발동”이라고 적혀 있다. 병 안쪽에는 약초 냄새가 남아 있다."},
+ L2:{name:"지연 스크롤 제작 흔적",category:"루시안 · 소지품",desc:"작업대에 시간 지연 스크롤을 만드는 데 쓰이는 마력 가루와 제작 흔적이 남아 있다. 현장에서 발견된 스크롤과 같은 종류다."},
+ L3:{name:"엘레나를 지목하는 루시안의 진술",category:"루시안 · 진술",desc:"루시안은 성스러운 단검은 마법을 무효화하며 성기사만 소유할 수 있고, 성 안의 성기사는 엘레나뿐이므로 그녀가 범인이라고 주장한다.",note:"단검은 마법을 무효화하므로 단검을 직접 든 사람은 주문을 외울 수 없다."},
+ I1:{name:"피 묻은 수건과 용혈주 병",category:"이사벨라 · 소지품",desc:"이사벨라의 방에서 검붉은 자국이 남은 수건과 고급 용혈주 병이 발견된다. 수건은 급히 씻은 흔적이 있고, 병은 집무실에 있던 술과 같은 종류다."},
+ I2:{name:"단검을 놓았던 의자 자국",category:"이사벨라 · 소지품",desc:"이사벨라의 방 의자에는 무거운 금속 물건을 잠시 올려 두었던 자국이 있다."},
+ I3:{name:"루시안에 대한 이사벨라의 진술",category:"이사벨라 · 진술",desc:"이사벨라는 올렉이 루시안의 연구비를 지원하는 대신 루시안이 대가 없이 마법 지원을 하기로 했다고 말했다. 올렉이 지원을 끊으려 했다면 루시안이 원한을 품었을 수 있다고 덧붙였다."},
+ B1:{name:"마스터 키",category:"베르트 · 소지품",desc:"베르트는 성 안의 모든 방과 집무실 잠금장치를 열 수 있는 마스터 키를 소지하고 있다. 집무실 자물쇠는 이 열쇠로만 열 수 있다."},
+ B2:{name:"성의 비밀 통로 지도",category:"베르트 · 소지품",desc:"오래된 지도에는 책장 뒤 통로와 성 뒤편 하수도로 이어지는 길이 표시되어 있다. 지도는 자주 접었다 펼친 흔적이 있다."},
+ B3:{name:"이사벨라에 대한 베르트의 진술",category:"베르트 · 진술",desc:"베르트는 21시 무렵 이사벨라가 피 묻은 단검을 들고 급히 나가는 모습을 보았다고 말한다. 그는 올렉이 이사벨라와의 투자 계약을 취소하고 가문 밖으로 나간 상속 재산을 되찾으려 했다고 덧붙인다."}
+};
+function claimEpisode2Reward(){if(!state.ep2RewardClaimed){state.churuCount=(state.churuCount||0)+1;state.ep2RewardClaimed=true;save();toast('츄르 1개를 받았습니다!');}go('episodes');}
+const EP2_ALIBIS={
+ elena:"성물 보관소를 점검 중이었는데 결계 단검이 사라진 사실을 알게 됐습니다. 21시 15분에 그 사실을 보고하러 집무실에 갔지만 응답이 없어 돌아갔어요. 그리고 22시에 집무실에서 쿵 하는 소리를 들었습니다.",
+ lucian:"저는 21시까지 연구실에 있었습니다. 그리고 21시 20분에 집무실에 방문했는데, 이미 그때 결계 단검에 찔려있었고 저는 치료제를 만들기 위해 다시 연구실에 갔습니다. 그러다가 22시에 집무실에서 나는 소리를 들었습니다.",
+ isabella:"20시 40분에 올렉과 조금 다투긴 했어요. 하지만 저는 진심으로 올렉을 사랑하고 있어서 마음을 진정시키고 다시 화해를 청하러 가기 위해 21시 10분부터 욕실에서 목욕 중이었어요. 그 뒤로는 치장을 하다가 22시에 소리를 듣고 급하게 나왔어요.",
+ bert:"저는 오늘 20시 55분에 영주님께 내일 일과를 말씀드리러 갔는데, 집무실 안에서 영주님이 이사벨라 부인과 다투는 소리를 듣고 자리를 피해드렸습니다. 21시 55분에 영주님께 다시 보고하러 가기 위해 집무실로 가는 도중 연회장에 있던 엘레나님을 마주쳤고, 집무실에 도착하니 이미 영주님은 사망한 상태였습니다."
+};
+function showAlibi(id){showModal(id==='elena'?'엘레나의 알리바이':id==='lucian'?'루시안의 알리바이':id==='isabella'?'이사벨라의 알리바이':'베르트의 알리바이',EP2_ALIBIS[id]||'');}
+function showClientInfo(){showInfoSections('의뢰인이 준 정보',[
+ {title:'현장 상황',items:['3층 개인 집무실 내부에서 문이 안으로 잠긴 밀실 상태.','영주의 가슴에는 ‘마법 무효화 결계 단검’이 꽂혀 있음.','바닥에는 피와 깨진 용혈주(와인) 잔, 넘어진 의자가 흩어져 있음.','책상 위에는 발동된 ‘시간 지연 스크롤’ 흔적이 남아있음.']},
+ {title:'사건 관련 정보',items:['결계 단검: 마력을 완전히 무효화함. 베이거나 찔리면 마법 치료 불가. 단검을 직접 품에 지니고 있는 동안에는 마법 시전 및 영창 불가.','독약 ‘드래곤 브레스’: 복용 후 정확히 30분 뒤 치사량의 혈전이 발생하여 사망.','시간 지연 스크롤: 발동 후 정확히 15분 뒤 지정한 소리나 물리적 충격을 발생시킴.','환영 마법: 외형을 바꾸지만, 거울에 반사되면 본래의 진실된 모습이 비침.']}
+]);}
+function openEpisode2(){go('ep2-letter');}
+function beginEpisode2(){
+ if(!Array.isArray(state.ep2Found))state.ep2Found=[];
+ if(state.ep2Status!=='active' && state.ep2Status!=='solved'){
+  state.ep2Status='active';state.ep2WrongAttempts=0;state.ep2Tokens=15;
+ }
+ if(!Number.isFinite(state.ep2Tokens))state.ep2Tokens=Math.max(0,15-state.ep2Found.length);
+ save();renderEpisode2Lists();go('ep2-scene');
+}
+function inspectEp2(id){
+ const clue=EP2_CLUES[id];if(!clue)return;
+ if(!Array.isArray(state.ep2Found))state.ep2Found=[];
+ const alreadyFound=state.ep2Found.includes(id);
+ if(!alreadyFound){
+  if(!Number.isFinite(state.ep2Tokens))state.ep2Tokens=Math.max(0,15-state.ep2Found.length);
+  if(state.ep2Tokens<=0){showInvestigationPurchaseConfirm('ep2',id);return;}
+  state.ep2Found.push(id);state.ep2Tokens--;save();
+ }
+ showClueModal(clue.name,clue.desc,clue.note);
+ renderEpisode2Lists();
+}
+function renderEpisode2Lists(){
+ if(!Array.isArray(state.ep2Found))state.ep2Found=[];
+ if(!Number.isFinite(state.ep2Tokens))state.ep2Tokens=Math.max(0,15-state.ep2Found.length);
+ const ids=state.ep2Found.filter(id=>EP2_CLUES[id]);
+ const sceneIds=ids.filter(id=>id.startsWith('A'));
+ const sc=document.getElementById('ep2-scene-count');if(sc)sc.textContent=sceneIds.length;
+ const tc=document.getElementById('ep2-total-count');if(tc)tc.textContent=ids.length;
+ const t2=document.getElementById('ep2-table-count');if(t2)t2.textContent=ids.length;
+ ['ep2-badges-scene','ep2-badges-suspects'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=state.churuCount;});
+ ['ep2-tokens-left','ep2-suspect-tokens-left'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=state.ep2Tokens;});
+ const strip=document.getElementById('ep2-scene-found');if(strip)strip.innerHTML=sceneIds.length?sceneIds.map(id=>`<button onclick="inspectEp2('${id}')">✓ ${EP2_CLUES[id].name}</button>`).join(''):'<span class="hint">아직 조사한 현장 단서가 없습니다.</span>';
+ const list=document.getElementById('ep2-evidence-list');if(list)list.innerHTML=ids.length?ids.map(id=>`<button class="ep2-evidence-card" onclick="inspectEp2('${id}')"><strong>${EP2_CLUES[id].name}</strong><small>${EP2_CLUES[id].category}</small></button>`).join(''):'<p class="hint">아직 발견한 단서가 없습니다. 현장이나 용의자를 조사해 보세요.</p>';
+}
+function submitEpisode2(){
+ const cause=document.getElementById('ep2-cause').value,killer=document.getElementById('ep2-killer').value,poisoner=document.getElementById('ep2-poisoner').value,relation=document.getElementById('ep2-relation').value,explanation=document.getElementById('ep2-explanation').value.trim();
+ const err=document.getElementById('ep2-accuse-error');
+ if(!cause||!killer||!poisoner||!relation||!explanation){err.textContent='모든 선택 항목에 답하고, 핵심 증거를 한두 문장 이상으로 설명해 주세요.';return;}
+ const lower=explanation.toLowerCase();
+ // 5회 조사 안에서 핵심 흐름을 잡을 수 있도록, A3의 지연 스크롤 자체로 스크롤 제작 단서를 대체한다.
+ const hasPoison=state.ep2Found.includes('L1')&&state.ep2Found.includes('A1');
+ const hasPassage=state.ep2Found.includes('A4')&&(state.ep2Found.includes('B1')||state.ep2Found.includes('B2'));
+ const hasScroll=state.ep2Found.includes('A3');
+ const timeCue=/(30\s*분|삼십\s*분|21\s*시\s*20\s*분|21\s*:\s*20|21\s*시\s*50\s*분|21\s*:\s*50|반\s*시간)/.test(lower);
+ const keyCue=/(마스터\s*키|마스터키|열쇠|집무실.*잠금|잠금.*집무실)/.test(lower);
+ const passageCue=/(비밀\s*통로|통로|하수도)/.test(lower);
+ const separateCue=/(별개|각자|공모|입증|증거|따로|독립적|협력했다는 증거가 없|함께 계획했다는 증거가 없)/.test(lower);
+ const correct=cause==='poison'&&killer==='bert'&&poisoner==='lucian'&&relation==='separate'&&hasPoison&&hasPassage&&hasScroll&&timeCue&&keyCue&&passageCue&&separateCue;
+ if(correct){
+  state.ep2Status='solved';if(!state.completed.includes('red-feast'))state.completed.push('red-feast');save();
+  document.getElementById('ep2-result-title').textContent='사건 해결 — 두 갈래의 범행';
+  document.getElementById('ep2-result-content').innerHTML='<h3>🕯 진실이 밝혀졌습니다</h3><p><b>루시안</b>은 21시 20분 올렉에게 드래곤 브레스를 먹였습니다. 복용 30분 뒤 효과가 나타나는 독으로 올렉은 21시 50분에 사망했습니다. 루시안은 15분 지연 스크롤을 21시 45분에 작동시켜 22시에 충돌음이 나도록 꾸몄습니다.</p><p><b>이사벨라</b>는 20시 55분 올렉을 단검으로 찔렀지만, 그 상처가 직접적인 사망 원인은 아니었습니다. 그녀가 방으로 돌아온 뒤 단검을 가져간 베르트는 올렉이 독으로 사망한 후 단검을 다시 꽂아 이사벨라에게 죄를 씌우려 했습니다.</p><p><b>베르트</b>는 마스터 키와 비밀 통로 지식을 이용해 집무실을 드나들고, 통로를 통해 빠져나갔습니다. 찢어진 노트는 30년 전 올렉에게 가족을 잃었다고 믿는 베르트의 복수 동기를 가리킵니다.</p><p><b>중요한 결론:</b> 루시안과 베르트는 각자 다른 목적의 범행을 저질렀습니다. 둘이 공모했다는 사실까지 입증할 증거는 발견되지 않았습니다.</p>';
+  go('ep2-gratitude');
+ }else{
+  state.ep2WrongAttempts=(state.ep2WrongAttempts||0)+1;save();
+  err.textContent='아직 정답과 증거 연결이 완전히 맞지 않습니다. 단서 확인은 ‘수사 테이블로 돌아가 단서 확인’ 버튼을 누르면 됩니다.';
+ }
+}
+
+const EP3_CLUES={
+ S1:{name:"엎질러진 물그릇",category:"현장 증거 · 거실",desc:"물그릇이 엎어져 물이 소파와 로봇 청소기 충전기 방향으로 길게 흘러 있다."},
+ S2:{name:"소파 구석의 의심스러운 박스",category:"현장 증거 · 거실",desc:"소파 구석에 빈 박스가 놓여 있다. 입구에는 무언가가 안쪽으로 밀려 들어가며 생긴 듯한 얕은 긁힌 자국이 남아 있다."},
+ S3:{name:"테이블 다리의 찌그러진 자국",category:"현장 증거 · 거실",desc:"테이블 밑바닥의 다리 한쪽이 찌그러져 있다. 표면에는 검은 고무가 묻어 있고, 자국은 낮은 위치에 집중되어 있다."},
+ S4:{name:"영수증 조각",category:"현장 증거 · 집사의 외투",desc:"집사의 외투 주머니에서 영수증 조각이 떨어져 있다. ‘동물병원 예약금 — 내일 오전 10시 검진’이라는 문구가 보인다."},
+ H1:{name:"집사의 진술",category:"집사 · 진술",desc:"“장보고 돌아오니 캔이 없어졌어! 난 다이어트 중이라 닭가슴살만 먹었다구.”"},
+ C1:{name:"초코의 진술",category:"초코 · 진술",desc:"“난 2시 1분쯤 장난감을 찾으러 들어왔어. 물그릇을 엎지르고 놀라서 도망쳤지! 물을 쏟은 건 2시 15분쯤이야.”"},
+ G1:{name:"구구의 목격 진술",category:"구구 · 진술",desc:"“2시 반쯤 베란다 틈으로 봤는데, ‘충전소로 돌아갑니다’라는 소리가 나면서 뭔가가 캔을 끌고 가던데?”"},
+ R1:{name:"싹싹이의 먼지통",category:"싹싹이 · 물적 증거",desc:"먼지통을 열자 참치 캔 뚜껑의 비닐 라벨 조각과 희미한 기름기가 남아 있다."}
+};
+function openEpisode3(){if(!state.nickname){go('nickname');return;}if(state.ep3Status==='active'){go('ep3-scene');return;}if(state.ep3Status==='solved'){go('ep3-result');return;}go('ep3-letter');}
+function beginEpisode3(){if(!Array.isArray(state.ep3Found))state.ep3Found=[];if(state.ep3Status!=='active'){state.ep3Found=[];state.ep3Tokens=6;state.ep3Status='active';}save();renderEpisode3Lists();go('ep3-scene');}
+function showClientInfoEp3(){showInfoSections('사건 의뢰 내용',[{title:'사건 상황',items:['수제 프리미엄 참치 캔이 거실 테이블 위에서 사라졌다.','사건은 오후 2시에서 3시 사이에 일어난 것으로 보인다.','현장에는 엎질러진 물그릇과 소파 구석의 박스가 있다.','집사, 초코, 구구, 로봇 청소기 싹싹이의 진술과 흔적을 조사한다.']}]);}
+function inspectEp3(id){const clue=EP3_CLUES[id];if(!clue)return;if(!Array.isArray(state.ep3Found))state.ep3Found=[];if(!state.ep3Found.includes(id)){if(!Number.isFinite(state.ep3Tokens))state.ep3Tokens=Math.max(0,6-state.ep3Found.length);if(state.ep3Tokens<=0){showInvestigationPurchaseConfirm('ep3',id);return;}state.ep3Found.push(id);state.ep3Tokens--;save();}showClueModal(clue.name,clue.desc,clue.note);renderEpisode3Lists();}
+function renderEpisode3Lists(){if(!Array.isArray(state.ep3Found))state.ep3Found=[];if(!Number.isFinite(state.ep3Tokens))state.ep3Tokens=Math.max(0,6-state.ep3Found.length);const ids=state.ep3Found.filter(id=>EP3_CLUES[id]),sceneIds=ids.filter(id=>id.startsWith('S'));[['ep3-scene-count',sceneIds.length],['ep3-total-count',ids.length],['ep3-table-count',ids.length],['ep3-tokens-left',state.ep3Tokens],['ep3-suspect-tokens-left',state.ep3Tokens],['ep3-table-tokens',state.ep3Tokens],['ep3-suspect-found',ids.length],['ep3-churu-count',state.churuCount||0],['ep3-suspect-churu',state.churuCount||0]].forEach(([id,value])=>{const e=document.getElementById(id);if(e)e.textContent=value;});const strip=document.getElementById('ep3-scene-found');if(strip)strip.innerHTML=sceneIds.length?sceneIds.map(id=>`<button onclick="inspectEp3('${id}')">✓ ${EP3_CLUES[id].name}</button>`).join(''):'<span class="hint">아직 조사한 현장 단서가 없습니다.</span>';const list=document.getElementById('ep3-evidence-list');if(list)list.innerHTML=ids.length?ids.map(id=>`<button class="ep2-evidence-card" onclick="inspectEp3('${id}')"><strong>${EP3_CLUES[id].name}</strong><small>${EP3_CLUES[id].category}</small></button>`).join(''):'<p class="hint">아직 발견한 단서가 없습니다. 현장이나 주변 인물을 조사해 보세요.</p>';}
+function submitEpisode3(){const culprit=document.getElementById('ep3-culprit').value,trick=document.getElementById('ep3-trick').value,evidence=document.getElementById('ep3-evidence').value,motive=document.getElementById('ep3-motive').value,err=document.getElementById('ep3-accuse-error');if(!culprit||!trick||!evidence||!motive){err.textContent='모든 질문에 답한 뒤 추리를 제출해 주세요.';return;}const needed=['S1','S3','S4','H1','C1','R1'];if(!needed.every(id=>state.ep3Found.includes(id))){err.textContent='물그릇과 초코의 진술, 테이블 자국과 먼지통, 영수증과 집사의 진술을 연결할 단서를 더 조사해 주세요.';return;}if(culprit==='butler'&&trick==='robot-slip'&&evidence==='receipt'&&motive==='fasting'){state.ep3Status='solved';if(!state.completed.includes('premium-tuna'))state.completed.push('premium-tuna');save();go('ep3-result');return;}err.textContent='추리를 다시 검토해 보세요. 물에 미끄러진 청소기의 흔적, 집사의 진술과 동물병원 영수증이 가리키는 이유를 연결해 보세요.';}
+function claimEpisode3Reward(){if(!state.ep3RewardClaimed){state.churuCount=(state.churuCount||0)+1;state.ep3RewardClaimed=true;save();toast('츄르 1개를 받았습니다!');}go('episodes');}
+
+const EP4_CLUES={
+ S1:{name:"잠긴 회관 문",category:"현장 증거 · 회관 입구",desc:"회관 문은 잠겨 있지만 자물쇠에 강제로 부순 흔적은 없다. 문틈에는 아주 가느다란 은빛 섬유가 끼어 있다."},
+ S2:{name:"별빛 수정의 받침대",category:"현장 증거 · 회관 안",desc:"수정이 놓였던 받침대에 긁힌 자국이 있다. 자국의 폭은 보석 세공 도구와 비슷하지만 받침대에는 오래된 흠집도 여러 개 있다."},
+ S3:{name:"푸른 가루와 발자국",category:"현장 증거 · 회관 안",desc:"푸른 가루가 뒤편 창문에서 수정 받침대까지 이어져 있다. 발자국의 크기는 세 난쟁이 모두와 비슷하다."},
+ S4:{name:"회관 뒤편 창문",category:"현장 증거 · 회관 바깥",desc:"창틀에 붉은 밀랍 조각이 붙어 있다. 창문은 열려 있었고 창틀에는 안쪽을 향한 긁힌 자국이 남아 있다."},
+ S5:{name:"방문 기록판",category:"현장 기록 · 회관 입구",desc:"기록에는 루비가 저녁 경비를 맡았고, 파루는 수정 점검을 마쳤으며, 모스는 숲에서 약초를 채집했다고 적혀 있다. 어제 기록에는 모스가 별빛 수정 주변의 빛나는 버섯을 연구하러 왔다고 쓰여 있다."},
+ R1:{name:"회관 열쇠 꾸러미",category:"루비 · 소지품",desc:"루비의 열쇠 꾸러미에는 회관의 정식 열쇠가 들어 있다. 루비는 사건 당일 저녁 열쇠를 잠시 잃어버렸다가 곧 찾았다고 주장한다."},
+ R2:{name:"붉은 밀랍과 봉인 도장",category:"루비 · 소지품",desc:"루비의 가방에서 붉은 밀랍과 봉인 도장이 발견된다. 루비는 회관 창문 잠금이 헐거워 밀랍으로 봉인해 두었다고 말한다."},
+ R3:{name:"루비의 목격담",category:"루비 · 타인에 대한 증언",desc:"“누군가가 회관 뒤편 창문으로 향하는 걸 봤어. 파루인지 모스인지는 확실하지 않아. 나는 초록색과 파란색을 잘 구분하지 못하거든.”"},
+ B1:{name:"푸른 연마 가루",category:"파루 · 소지품",desc:"파루의 가방에서 별빛 수정을 다듬을 때 사용하는 푸른 연마 가루가 발견된다."},
+ B2:{name:"은제 세공 도구",category:"파루 · 소지품",desc:"파루의 은제 세공 도구 끝부분에 미세한 흠집이 있다. 파루는 보석을 세공하다가 생긴 흠집이라고 주장한다."},
+ B3:{name:"모스와 루비에 대한 파루의 증언",category:"파루 · 타인에 대한 증언",desc:"“초록 옷을 입은 모스가 사건 당일 회관 근처에서 뭔가를 숨기는 것처럼 행동했어. 그리고 루비가 열쇠를 잃어버렸다는 얘기도 들었지.”"},
+ G1:{name:"약초 주머니",category:"모스 · 소지품",desc:"모스의 약초 주머니 안에서 푸른색 가루가 묻은 천 조각이 발견된다. 모스는 약초를 염색할 때 사용한 천이라고 설명한다."},
+ G2:{name:"은빛 실타래",category:"모스 · 소지품",desc:"모스가 가진 실타래 끝이 최근 끊어진 듯하다. 모스는 빛나는 버섯을 채집할 때 썼다고 주장한다."},
+ G3:{name:"루비와 파루에 대한 모스의 증언",category:"모스 · 타인에 대한 증언",desc:"“루비가 해 질 무렵 회관에 들어가는 걸 봤어. 사건이 일어나기 전에는 파루가 천으로 무언가를 감싼 채 작업실 쪽으로 걸어가는 것도 봤어. 평소에도 보석을 천으로 감싸 옮기곤 했지.”"}
+};
+function openEpisode4(){if(!state.nickname){go('nickname');return;}if(state.ep4Status==='active'){go('ep4-scene');return;}if(state.ep4Status==='solved'){go('ep4-result');return;}go('ep4-letter');}
+function beginEpisode4(){if(!Array.isArray(state.ep4Found))state.ep4Found=[];if(state.ep4Status!=='active'){state.ep4Found=[];state.ep4Tokens=12;state.ep4Status='active';}save();renderEpisode4Lists();go('ep4-scene');}
+function showClientInfoEp4(){showInfoSections('의뢰인이 준 정보',[{title:'사건 상황',items:['별빛 수정은 난쟁이 마을 회관에 보관되어 있으며, 축제 전날 밤 사라졌다.','회관 문은 안쪽에서 잠겨 있었고 강제로 부순 흔적은 없다.','뒤편 창문은 난쟁이 한 명이 겨우 통과할 만큼 좁지만, 별빛 수정은 한 팔로 안을 수 있는 크기다.']},{title:'사건 당시 접근할 수 있었던 사람',items:['루비: 빨간 옷을 입은 마을 경비이며 회관의 정식 열쇠를 관리한다.','파루: 파란 옷을 입은 보석 세공사이며 수정의 빛을 점검하고 다듬는다.','모스: 초록 옷을 입은 약초꾼이며 숲의 약초와 광물을 채집한다.','세 사람 모두 사건 당일 별빛 수정과 관련된 행동을 할 기회가 있었다.']}]);}
+function inspectEp4(id){const clue=EP4_CLUES[id];if(!clue)return;if(!Array.isArray(state.ep4Found))state.ep4Found=[];if(!state.ep4Found.includes(id)){if(!Number.isFinite(state.ep4Tokens))state.ep4Tokens=Math.max(0,12-state.ep4Found.length);if(state.ep4Tokens<=0){showInvestigationPurchaseConfirm('ep4',id);return;}state.ep4Found.push(id);state.ep4Tokens--;save();}showClueModal(clue.name,clue.desc);renderEpisode4Lists();}
+function renderEpisode4Lists(){if(!Array.isArray(state.ep4Found))state.ep4Found=[];if(!Number.isFinite(state.ep4Tokens))state.ep4Tokens=Math.max(0,12-state.ep4Found.length);const ids=state.ep4Found.filter(id=>EP4_CLUES[id]),sceneIds=ids.filter(id=>id.startsWith('S'));[['ep4-scene-count',sceneIds.length],['ep4-total-count',ids.length],['ep4-table-count',ids.length],['ep4-tokens-left',state.ep4Tokens],['ep4-suspect-tokens-left',state.ep4Tokens],['ep4-table-tokens',state.ep4Tokens],['ep4-suspect-found',ids.length],['ep4-churu-count',state.churuCount||0],['ep4-suspect-churu',state.churuCount||0]].forEach(([id,value])=>{const e=document.getElementById(id);if(e)e.textContent=value;});const strip=document.getElementById('ep4-scene-found');if(strip)strip.innerHTML=sceneIds.length?sceneIds.map(id=>`<button onclick="inspectEp4('${id}')">✓ ${EP4_CLUES[id].name}</button>`).join(''):'<span class="hint">아직 조사한 현장 단서가 없습니다.</span>';const list=document.getElementById('ep4-evidence-list');if(list)list.innerHTML=ids.length?ids.map(id=>`<button class="ep2-evidence-card" onclick="inspectEp4('${id}')"><strong>${EP4_CLUES[id].name}</strong><small>${EP4_CLUES[id].category}</small></button>`).join(''):'<p class="hint">아직 발견한 단서가 없습니다. 현장이나 용의자를 조사해 보세요.</p>';}
+function submitEpisode4(){const culprit=document.getElementById('ep4-culprit').value,access=document.getElementById('ep4-access').value,route=document.getElementById('ep4-route').value.trim(),proof=document.getElementById('ep4-proof').value.trim(),err=document.getElementById('ep4-accuse-error');if(!culprit||!access||!route||!proof){err.textContent='모든 질문에 답하고, 반출 경로와 물증의 연결을 적어 주세요.';return;}const routeLower=route.toLowerCase();const routeCorrect=/(창문|창틀)/.test(routeLower)&&/(천|헝겊|천으로 감싸|감싸)/.test(routeLower)&&/(작업실|공방)/.test(routeLower);const proofLower=proof.toLowerCase();const proofChecks=[/(푸른.*가루|가루.*푸른)/.test(proofLower)&&/(파루|연마)/.test(proofLower)&&/(창문|발자국|받침대)/.test(proofLower),/(도구|세공)/.test(proofLower)&&/(긁힌 자국|흠집)/.test(proofLower)&&/(오래된|단정|비교)/.test(proofLower),/(은빛 섬유|은빛 실)/.test(proofLower)&&/(실타래|모스|단정|증명)/.test(proofLower),/(밀랍|봉인)/.test(proofLower)&&/(창문|루비)/.test(proofLower),/(방문 기록판|기록판)/.test(proofLower)&&/(파루|모스|루비)/.test(proofLower)];const proofCorrect=proofChecks.filter(Boolean).length>=2;if(culprit==='paru'&&access==='window'&&routeCorrect&&proofCorrect){state.ep4Status='solved';if(!state.completed.includes('starlight-crystal'))state.completed.push('starlight-crystal');save();go('ep4-result');return;}err.textContent='다시 단서를 비교해 보세요. 창문으로 접근해 수정을 옮긴 경로와, 여러 물증이 각 용의자에게 얼마나 직접 연결되는지 검토해 보세요.';}
+function claimEpisode4Reward(){if(!state.ep4RewardClaimed){state.churuCount=(state.churuCount||0)+1;state.ep4RewardClaimed=true;save();toast('츄르 1개를 받았습니다!');}go('episodes');}
+
+let buttonAudioContext=null;
+function playButtonSound(){
+ try{
+  const AudioContextClass=window.AudioContext||window.webkitAudioContext;if(!AudioContextClass)return;
+  if(!buttonAudioContext)buttonAudioContext=new AudioContextClass();
+  const play=()=>{const now=buttonAudioContext.currentTime,osc=buttonAudioContext.createOscillator(),gain=buttonAudioContext.createGain();osc.type='sine';osc.frequency.setValueAtTime(680,now);gain.gain.setValueAtTime(0.035,now);gain.gain.exponentialRampToValueAtTime(0.0001,now+0.045);osc.connect(gain);gain.connect(buttonAudioContext.destination);osc.start(now);osc.stop(now+0.05);};
+  if(buttonAudioContext.state==='suspended')buttonAudioContext.resume().then(play).catch(()=>{});else play();
+ }catch(e){}
+}
+document.addEventListener('click',event=>{const button=event.target.closest('button');if(event.isTrusted&&button&&!button.disabled)playButtonSound();});
+
+restore();
+if(!state._churuCurrencyUnified){state.churuCount=(Number(state.churuCount)||0)+(Number(state.badges)||0);state._churuCurrencyUnified=true;}delete state.badges;
+if(state._investigationRuleVersion!==3){state.tokens=Math.max(0,10-(Array.isArray(state.found)?state.found.length:0)+(state.extraInvestigations||0));state.ep2Tokens=Math.max(0,15-(Array.isArray(state.ep2Found)?state.ep2Found.length:0)+(state.ep2ExtraInvestigations||0));state._investigationRuleVersion=3;}
+if(!Array.isArray(state.ep2Found))state.ep2Found=[];
+if(!Array.isArray(state.ep3Found))state.ep3Found=[];
+if(!Array.isArray(state.ep4Found))state.ep4Found=[];
+if(!Number.isFinite(state.ep4Tokens))state.ep4Tokens=Math.max(0,12-state.ep4Found.length);
+if(!state.ep2Status)state.ep2Status="";
+if(!state.ep3Status)state.ep3Status="";
+if(!state.ep4Status)state.ep4Status="";
+if(!Number.isFinite(state.ep2Tokens))state.ep2Tokens=Math.max(0,15-(Array.isArray(state.ep2Found)?state.ep2Found.length:0));
+document.getElementById("nickname").value=state.nickname||"";
+updateUI();
+// Simulated loading progress for a self-contained prototype.
+let progress=0;const fill=document.getElementById("load-fill"),pct=document.getElementById("load-percent");
+const loader=setInterval(()=>{progress=Math.min(100,progress+Math.floor(Math.random()*9)+4);fill.style.width=progress+"%";pct.textContent=progress+"%";if(progress>=100){clearInterval(loader);setTimeout(()=>{const l=document.getElementById("loading");l.style.opacity="0";setTimeout(()=>l.style.display="none",500);if(!state.nickname){go("title");}else{go("title");}},350);}},120);
+</script>
+</body>
+</html>
